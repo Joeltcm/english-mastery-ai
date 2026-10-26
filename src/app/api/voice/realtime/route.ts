@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { buildSystemPrompt } from "@/lib/learning";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
+import { recordAiUsageEvent } from "@/lib/usage";
 import { modeSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
@@ -27,5 +28,6 @@ export async function POST(request: Request) {
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) return NextResponse.json({ error: data?.error?.message || "OpenAI could not start live voice practice." }, { status: 502 });
+  void recordAiUsageEvent({ userId: session.user.id, provider: "openai", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", kind: "voice_realtime_session", metadata: { mode } });
   return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
 }

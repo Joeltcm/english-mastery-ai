@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
+import { estimateTtsCostUsd, recordAiUsageEvent } from "@/lib/usage";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -22,5 +23,6 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "The AI voice provider could not generate audio." }, { status: 502 });
   }
+  void recordAiUsageEvent({ userId: session.user.id, provider: "openai", model, kind: "voice_tts", estimatedCostUsd: estimateTtsCostUsd(text.length), metadata: { characters: text.length } });
   return new Response(await speech.arrayBuffer(), { headers: { "Content-Type": "audio/mpeg", "Cache-Control": "no-store" } });
 }
