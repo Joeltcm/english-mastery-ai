@@ -94,7 +94,7 @@ npm run deploy:preflight
 - Correction history is captured only when the tutor emits an explicit correction block and is surfaced in the grammar progress view.
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
 - User-approved memories can be created, edited, and deleted from Settings.
-- Installable PWA manifest, icon, service-worker registration, and offline shell fallback.
+- Installable PWA manifest with scope, adaptive icon declarations, iOS metadata, service-worker registration, and offline shell fallback.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, and voice turns so progress reflects completed activity.
 - Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.

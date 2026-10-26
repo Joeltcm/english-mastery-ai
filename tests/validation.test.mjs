@@ -32,6 +32,9 @@ test("learning and privacy surfaces are present", () => {
   const manifest = JSON.parse(readFileSync(join(root, "public/manifest.webmanifest"), "utf8"));
   assert.equal(manifest.display, "standalone");
   assert.equal(manifest.start_url, "/");
+  assert.equal(manifest.scope, "/");
+  assert.equal(manifest.icons.length >= 2, true);
+  assert.match(readFileSync(join(root, "src/app/layout.tsx"), "utf8"), /appleWebApp/);
   assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model AiUsageEvent/);
   assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model RateLimitBucket/);
   assert.match(readFileSync(join(root, "railway.retention.toml"), "utf8"), /cronSchedule/);
