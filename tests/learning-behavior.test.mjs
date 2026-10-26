@@ -38,3 +38,13 @@ test("learning prompts preserve the original request and active focus", async ()
   assert.match(assistantPrompt, /Correction:/);
   assert.match(assistantPrompt, /Explicación \(ES\)/);
 });
+
+test("adaptive lesson ordering prioritizes pending lessons in the weaker focus", async () => {
+  const { orderLessons } = await loadTypeScriptModule("src/lib/lesson-order.ts");
+  const lessons = [
+    { slug: "done-grammar", focus: "grammar", attemptCount: 1 },
+    { slug: "pending-vocabulary", focus: "vocabulary", attemptCount: 0 },
+    { slug: "pending-mixed", focus: "mixed", attemptCount: 0 },
+  ];
+  assert.deepEqual(orderLessons(lessons, "vocabulary").map((lesson) => lesson.slug), ["pending-vocabulary", "pending-mixed", "done-grammar"]);
+});

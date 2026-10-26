@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
-import { lessonCatalog, type CatalogLesson } from "@/lib/lesson-catalog";
+import { lessonCatalog } from "@/lib/lesson-catalog";
+import { orderLessons } from "@/lib/lesson-order";
 
 export async function GET() {
   const session = await auth();
@@ -17,11 +18,7 @@ export async function GET() {
     return { ...lesson, id: stored.id, attemptCount };
   }));
   const weakerFocus = (profile?.grammarScore || 0) <= (profile?.vocabularyScore || 0) ? "grammar" : "vocabulary";
-  const focusRank = (focus: CatalogLesson["focus"]) => focus === weakerFocus ? 0 : focus === "mixed" ? 1 : 2;
-  const orderedLessons = [...lessons].sort((left, right) => {
-    const completionRank = Number(left.attemptCount > 0) - Number(right.attemptCount > 0);
-    return completionRank || focusRank(left.focus) - focusRank(right.focus) || lessonCatalog.findIndex((lesson) => lesson.slug === left.slug) - lessonCatalog.findIndex((lesson) => lesson.slug === right.slug);
-  });
+  const orderedLessons = orderLessons(lessons, weakerFocus);
   const recommended = orderedLessons[0];
   return NextResponse.json({ lessons: orderedLessons.map((lesson) => ({ ...lesson, recommended: lesson.slug === recommended?.slug })), databaseConfigured: true });
 }
