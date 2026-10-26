@@ -59,6 +59,7 @@ npm run deploy:preflight
 | `OPENAI_INPUT_COST_PER_MILLION_USD` | Optional | Current input-token price used for budget estimates |
 | `OPENAI_OUTPUT_COST_PER_MILLION_USD` | Optional | Current output-token price used for budget estimates |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
+| `HEALTHCHECK_STRICT` | Optional | Set to `true` to require PostgreSQL and OpenAI for a healthy deployment response; production mode is strict automatically |
 | `CRON_SECRET` | Required for retention cleanup | Secret for the scheduled privacy-maintenance request |
 | `RETENTION_APP_URL` | Required for the retention service | Public URL of the web service used by the Railway cron job |
 | `DATA_RETENTION_DAYS` | Optional | Retention window for AI usage and tool-execution logs; defaults to `365` and is clamped to 30–3650 days |
@@ -83,6 +84,7 @@ npm run deploy:preflight
 - Persistent PostgreSQL-backed rate limiting for registration and chat, with an in-memory fallback for local/offline development.
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
+- Health check is intentionally degraded-but-usable during local development and strict in production, so Railway cannot accept a deployment missing required services.
 - Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
 - Adaptive lesson catalog persisted in PostgreSQL, ordered from the learner’s weaker skill and tracked through lesson attempts; it covers grammar, vocabulary, irregular verbs, listening, reading, writing, and speaking.
 - Lesson cards expose separate Tutor launch and explicit “Mark practiced” actions, so completion is never inferred from merely opening a lesson.
