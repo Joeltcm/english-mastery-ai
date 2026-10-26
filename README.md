@@ -5,10 +5,10 @@ English Mastery AI is a production-oriented foundation for a personal AI assista
 ## Architecture
 
 - Next.js App Router + TypeScript + Tailwind CSS
-- Route Handlers for authentication, health, conversations, and streaming chat
+- Route Handlers for authentication, health, conversations, streaming chat, vocabulary reviews, and voice speech
 - Auth.js credentials provider with JWT sessions and bcrypt password hashing
 - Prisma ORM with PostgreSQL schema and versioned initial migration
-- OpenAI Responses API called only from the server; streamed with SSE to the client
+- OpenAI Responses API called only from the server; streamed with SSE to the client, with optional server-side TTS
 - Railway configuration includes Prisma client generation, migration deployment, and health checks
 
 ## Local setup
@@ -49,6 +49,8 @@ npm run build
 | `AUTH_SECRET` | Yes for auth | Long random secret for Auth.js sessions |
 | `OPENAI_API_KEY` | Yes for AI chat | Server-only OpenAI credential |
 | `OPENAI_MODEL` | Optional | Model used by the Responses API; defaults to `gpt-5.5` |
+| `OPENAI_TTS_MODEL` | Optional | TTS model for the voice coach; defaults to `gpt-4o-mini-tts` |
+| `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 
 ## Implemented in Milestone 1
@@ -61,10 +63,13 @@ npm run build
 - Auth.js credentials sign-in and registration with user-scoped data access.
 - Conversation and message persistence with ownership checks.
 - Streaming assistant responses using the server-side OpenAI Responses API.
+- Voice practice: browser speech recognition, streamed tutor replies, server-side AI speech when configured, and browser speech fallback.
+- An interactive irregular-verb deck with travel, daily life, work, technology, and international context filters.
+- Spaced-review ratings (`Again`, `Hard`, `Good`, `Easy`) persisted through user-scoped vocabulary APIs when PostgreSQL is connected.
 - Basic in-memory rate limiting and request validation.
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
 
 ## Remaining work
 
-The next milestones add assessment and adaptive lesson execution, real spaced repetition, voice and specialized pronunciation scoring, authorized external tools, travel simulations, data export/account deletion, persistent rate limiting, privacy retention jobs, and deployment verification with live credentials.
+The next milestones add assessment and adaptive lesson execution, specialized pronunciation scoring, authorized external tools, travel simulations, data export/account deletion, persistent rate limiting, privacy retention jobs, and deployment verification with live credentials. The current voice coach uses browser recognition and optional speech synthesis; production-grade low-latency realtime audio and pronunciation scoring remain separate upgrades.
