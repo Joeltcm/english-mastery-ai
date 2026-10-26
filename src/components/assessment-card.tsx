@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, ClipboardCheck, LockKeyhole, RotateCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type User = { name?: string | null; email?: string | null } | null;
 type Question = { id: string; prompt: string; context: string; options: string[]; correct: string; skill: "grammar" | "vocabulary" };
@@ -23,6 +23,19 @@ export function AssessmentCard({ user }: { user: User }) {
   const [saveAttempted, setSaveAttempted] = useState(false);
   const [error, setError] = useState("");
   const startedAtRef = useRef<number | null>(null);
+  const [assessmentDue, setAssessmentDue] = useState(true);
+  const [hasAssessment, setHasAssessment] = useState(false);
+  const [assessmentKind, setAssessmentKind] = useState<"initial-focus" | "periodic-focus">("initial-focus");
+
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/assessment").then(async (response) => response.ok ? response.json() : null).then((data: { assessment?: unknown; assessmentDue?: boolean } | null) => {
+      if (!data) return;
+      setHasAssessment(Boolean(data.assessment));
+      setAssessmentDue(data.assessmentDue !== false);
+      setAssessmentKind(data.assessment ? "periodic-focus" : "initial-focus");
+    }).catch(() => undefined);
+  }, [user]);
 
   function finish() {
     const correctAnswers = questions.map((question) => ({ questionId: question.id, answer: answers[question.id] || "", correct: answers[question.id] === question.correct }));
@@ -35,12 +48,12 @@ export function AssessmentCard({ user }: { user: User }) {
       const elapsedMinutes = Math.max(1, Math.min(30, Math.ceil((Date.now() - (startedAtRef.current || Date.now())) / 60_000)));
       void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "initial-assessment", minutes: elapsedMinutes, metadata: { questionCount: questions.length } }) }).catch(() => undefined);
     }
-    if (user) fetch("/api/assessment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "initial-focus", level, scores: next, answers: correctAnswers }) }).then(async (response) => { const data = await response.json().catch(() => ({})); setSaved(response.ok && Boolean(data.saved)); setSaveAttempted(true); }).catch(() => setSaveAttempted(true));
+    if (user) fetch("/api/assessment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: assessmentKind, level, scores: next, answers: correctAnswers }) }).then(async (response) => { const data = await response.json().catch(() => ({})); setSaved(response.ok && Boolean(data.saved)); setSaveAttempted(true); setHasAssessment(true); setAssessmentDue(false); }).catch(() => setSaveAttempted(true));
   }
 
   if (result) return <section className="assessment-card card-panel"><div className="panel-heading"><div><span className="eyebrow">YOUR CHECK-IN</span><h3>Starting point: {result.level}</h3></div><CheckCircle2 className="panel-spark" size={19} /></div><div className="assessment-result"><strong>{result.overall}%</strong><span>focus score</span></div><div className="assessment-bars"><div><span>Grammar</span><strong>{result.grammar}%</strong></div><div><span>Context vocabulary</span><strong>{result.vocabulary}%</strong></div></div><p className="assessment-note">Your plan will recycle irregular verbs in real situations and keep strengthening the areas that need more retrieval.</p>{user ? saved ? <span className="assessment-saved">Saved to your learning profile</span> : saveAttempted ? <span className="assessment-saving">Local result — connect PostgreSQL to sync this result.</span> : <span className="assessment-saving">Saving to your profile…</span> : <span className="assessment-saving"><LockKeyhole size={13} /> Sign in to save this result</span>}<button className="soft-button" onClick={() => { setResult(null); setAnswers({}); setSaveAttempted(false); setSaved(false); }}><RotateCcw size={14} /> Retake check-in</button></section>;
 
-  if (!started) return <section className="assessment-card card-panel"><div className="panel-heading"><div><span className="eyebrow">INITIAL CHECK-IN</span><h3>Find your best starting point</h3></div><ClipboardCheck className="panel-spark" size={19} /></div><p className="assessment-note">Six short questions across irregular verbs and real-world vocabulary. It takes about two minutes and gives the learning path a useful baseline.</p><button className="primary-button" onClick={() => { startedAtRef.current = Date.now(); setStarted(true); }}><ClipboardCheck size={16} /> Start check-in</button></section>;
+  if (!started) return <section className="assessment-card card-panel"><div className="panel-heading"><div><span className="eyebrow">{assessmentKind === "periodic-focus" ? "PERIODIC CHECK-IN" : "INITIAL CHECK-IN"}</span><h3>{hasAssessment && !assessmentDue ? "Your baseline is still current" : hasAssessment ? "Refresh your learning baseline" : "Find your best starting point"}</h3></div><ClipboardCheck className="panel-spark" size={19} /></div><p className="assessment-note">{hasAssessment && !assessmentDue ? "After seven more study sessions, we’ll invite you to check your progress again." : "Six short questions across irregular verbs and real-world vocabulary. It takes about two minutes and helps the learning path adapt."}</p><button className="primary-button" onClick={() => { startedAtRef.current = Date.now(); setStarted(true); }}><ClipboardCheck size={16} /> {hasAssessment && !assessmentDue ? "Review check-in" : assessmentKind === "periodic-focus" ? "Start progress check" : "Start check-in"}</button></section>;
 
   return <section className="assessment-card card-panel"><div className="panel-heading"><div><span className="eyebrow">INITIAL CHECK-IN</span><h3>Choose the sentence that fits</h3></div><span className="progress-badge">{Object.keys(answers).length} / {questions.length}</span></div><div className="assessment-questions">{questions.map((question) => <fieldset key={question.id}><legend><span>{question.context}</span>{question.prompt}</legend><div className="assessment-options">{question.options.map((option) => <label key={option} className={answers[question.id] === option ? "assessment-option selected" : "assessment-option"}><input type="radio" name={question.id} value={option} checked={answers[question.id] === option} onChange={() => setAnswers((current) => ({ ...current, [question.id]: option }))} />{option}</label>)}</div></fieldset>)}</div>{error && <p className="form-error">{error}</p>}<button className="primary-button" onClick={() => { if (Object.keys(answers).length !== questions.length) { setError("Answer every question to get a useful baseline."); return; } finish(); }} disabled={Object.keys(answers).length !== questions.length}>Finish check-in</button></section>;
 }

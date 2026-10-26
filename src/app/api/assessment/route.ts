@@ -12,7 +12,8 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ assessment: null }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ assessment: null, databaseConfigured: false });
   const assessment = await db.assessment.findFirst({ where: { userId: session.user.id }, orderBy: { completedAt: "desc" }, select: { id: true, kind: true, level: true, scores: true, completedAt: true } });
-  return NextResponse.json({ assessment, databaseConfigured: true });
+  const sessionsSinceAssessment = await db.studySession.count({ where: { userId: session.user.id, ...(assessment ? { startedAt: { gt: assessment.completedAt } } : {}) } });
+  return NextResponse.json({ assessment, sessionsSinceAssessment, assessmentDue: !assessment || sessionsSinceAssessment >= 7, databaseConfigured: true });
 }
 
 export async function POST(request: Request) {

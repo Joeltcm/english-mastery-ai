@@ -5,7 +5,7 @@ English Mastery AI is a production-oriented personal AI assistant and adaptive E
 ## Architecture
 
 - Next.js App Router + TypeScript + Tailwind CSS
-- Route Handlers for authentication, health, conversations, streaming chat, assessment, progress, profile, vocabulary reviews, privacy, memory, and voice speech
+- Route Handlers for authentication, health, conversations, streaming chat, adaptive lessons, assessment, progress, profile, vocabulary reviews, privacy, memory, and voice speech
 - Auth.js credentials provider with JWT sessions and bcrypt password hashing
 - Prisma ORM with PostgreSQL schema and versioned initial migration
 - OpenAI Responses API called only from the server; streamed with SSE to the client, with optional server-side TTS
@@ -83,9 +83,12 @@ npm run build
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
 - Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
+- Adaptive lesson catalog persisted in PostgreSQL, ordered from the learner’s weaker skill and tracked through lesson attempts.
+- Periodic check-ins become due after seven recorded study sessions following the latest assessment.
 - Travel role-play launcher for airport, hotel, and international work situations, connected to Tutor mode.
 - Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
+- User-approved memories can be created, edited, and deleted from Settings.
 - Installable PWA manifest, icon, service-worker registration, and offline shell fallback.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, and voice turns so progress reflects completed activity.
