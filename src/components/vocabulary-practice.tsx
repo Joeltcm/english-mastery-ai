@@ -21,11 +21,14 @@ export function VocabularyPractice({ user }: { user: User }) {
   const [context, setContext] = useState("Mixed");
   const [reviewed, setReviewed] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [ratingBusy, setRatingBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
   const lastStudyReportAt = useRef(0);
+  const cardShownAt = useRef(0);
 
   useEffect(() => {
     if (!lastStudyReportAt.current) lastStudyReportAt.current = Date.now();
+    if (!cardShownAt.current) cardShownAt.current = Date.now();
     if (!user) return;
     let cancelled = false;
     fetch("/api/vocabulary")
@@ -47,10 +50,14 @@ export function VocabularyPractice({ user }: { user: User }) {
     setIndex((value) => value + 1);
     setRevealed(false);
     setFeedback("");
+    setRatingBusy(false);
+    cardShownAt.current = Date.now();
   }
 
   async function rate(rating: Rating) {
-    if (!current) return;
+    if (!current || ratingBusy) return;
+    setRatingBusy(true);
+    const responseMs = Math.max(0, Math.min(120_000, Date.now() - cardShownAt.current));
     setReviewed((value) => {
       const next = value + 1;
       if (user && next % 5 === 0) {
@@ -62,7 +69,7 @@ export function VocabularyPractice({ user }: { user: User }) {
     });
     setFeedback(rating === "EASY" ? "Great recall — this one can wait longer." : rating === "GOOD" ? "Nice. We’ll bring it back later." : rating === "HARD" ? "No problem. We’ll recycle it soon." : "That’s useful information. Let’s try it again.");
     if (!current.id.startsWith("local-")) {
-      await fetch("/api/vocabulary/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vocabularyId: current.id, rating }) }).catch(() => undefined);
+      await fetch("/api/vocabulary/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vocabularyId: current.id, rating, responseMs }) }).catch(() => undefined);
     }
     window.setTimeout(nextCard, 420);
   }
@@ -73,7 +80,7 @@ export function VocabularyPractice({ user }: { user: User }) {
     <div className="panel-heading"><div><span className="eyebrow">RECALL LAB</span><h3>Irregular verbs that live in context</h3></div><span className="progress-badge">{reviewed} reviewed</span></div>
     <div className="context-filter" aria-label="Vocabulary environment">{contexts.map((item) => <button key={item} className={context === item ? "context-chip active" : "context-chip"} onClick={() => { setContext(item); setIndex(0); setRevealed(false); }}>{item}</button>)}</div>
     <div className="flashcard" aria-live="polite"><div className="flashcard-top"><span className="flashcard-context">{current.context}</span><span>{loading ? "Syncing your deck…" : `${(index % Math.max(1, filteredItems.length)) + 1} / ${filteredItems.length}`}</span></div><div className="flashcard-word"><strong>{current.term}</strong><small>{forms[current.term] || current.pronunciation}</small></div>{revealed ? <div className="flashcard-answer"><strong>{current.translation}</strong><p>{current.example}</p></div> : <button className="reveal-button" onClick={() => setRevealed(true)}><Sparkles size={16} /> Reveal meaning and example</button>}</div>
-    {revealed && <div className="rating-row"><span className="rating-prompt">How easy was it to recall?</span><div className="rating-buttons"><button className="rating-again" onClick={() => rate("AGAIN")}><RotateCcw size={14} /> Again</button><button className="rating-hard" onClick={() => rate("HARD")}>Hard</button><button className="rating-good" onClick={() => rate("GOOD")}><Check size={14} /> Good</button><button className="rating-easy" onClick={() => rate("EASY")}>Easy</button></div></div>}
+    {revealed && <div className="rating-row"><span className="rating-prompt">How easy was it to recall?</span><div className="rating-buttons"><button className="rating-again" onClick={() => void rate("AGAIN")} disabled={ratingBusy}><RotateCcw size={14} /> Again</button><button className="rating-hard" onClick={() => void rate("HARD")} disabled={ratingBusy}>Hard</button><button className="rating-good" onClick={() => void rate("GOOD")} disabled={ratingBusy}><Check size={14} /> Good</button><button className="rating-easy" onClick={() => void rate("EASY")} disabled={ratingBusy}>Easy</button></div></div>}
     {feedback && <p className="review-feedback">{feedback} <ChevronRight size={14} /></p>}
     <div className="flashcard-footer"><span><Volume2 size={14} /> Say the verb out loud, then make your own sentence.</span><span>{filteredItems.length} focus words</span></div>
   </section>;
