@@ -2,7 +2,7 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 import { Activity, ArrowUpRight, BarChart3, BookOpenCheck, BrainCircuit, CheckCircle2, ChevronRight, Clock3, Flame, LayoutDashboard, LockKeyhole, Menu, MessageCircle, Mic, Moon, Paperclip, Send, Settings2, Sparkles, SunMedium, Target, UserRound, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { VocabularyPractice } from "@/components/vocabulary-practice";
 import { VoicePractice } from "@/components/voice-practice";
@@ -42,6 +42,24 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [voiceOpen, setVoiceOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetch("/api/conversations")
+      .then(async (response) => response.ok ? response.json() : null)
+      .then(async (data: { conversations?: Array<{ id: string }> } | null) => {
+        const latest = data?.conversations?.[0];
+        if (!latest || cancelled) return;
+        const detailResponse = await fetch(`/api/conversations/${latest.id}`);
+        const detail = await detailResponse.json() as { conversation?: { id: string; messages: Array<{ id: string; role: "USER" | "ASSISTANT"; content: string }> } };
+        if (cancelled || !detail.conversation) return;
+        setConversationId(detail.conversation.id);
+        setMessages(detail.conversation.messages.map((message) => ({ id: message.id, role: message.role === "USER" ? "user" : "assistant", content: message.content })));
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [user]);
 
   const profile = initialProfile ?? { proficiencyLevel: "B1", dailyGoalMinutes: 20, currentStreak: 4, totalStudyMinutes: 126, grammarScore: 62, vocabularyScore: 48 };
   const displayName = user?.name?.split(" ")[0] || "Learner";
