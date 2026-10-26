@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
 import { db } from "@/lib/prisma";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -13,6 +14,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const email = typeof credentials?.email === "string" ? credentials.email.toLowerCase().trim() : "";
       const password = typeof credentials?.password === "string" ? credentials.password : "";
       if (!email || !password || !process.env.DATABASE_URL) return null;
+      const rate = await consumePersistentRateLimit(`login:${email}`, 10, 15 * 60_000);
+      if (!rate.allowed) return null;
       const user = await db.user.findUnique({ where: { email } });
       if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) return null;
       return { id: user.id, email: user.email, name: user.name };

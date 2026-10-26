@@ -72,6 +72,7 @@ npm run deploy:preflight
 - Supportive correction instructions, including corrected sentence, natural alternative, and concise Spanish explanation when relevant.
 - Active learning focus on irregular verbs and contextual vocabulary across travel, daily life, work/technology, and international conversations.
 - Auth.js credentials sign-in and registration with user-scoped data access.
+- Persistent login-attempt limiting by normalized email, alongside registration and AI endpoint rate limits.
 - Conversation and message persistence with ownership checks.
 - Streaming assistant responses using the server-side OpenAI Responses API.
 - Optional web research toggle; search is off by default, requires an explicit user action, and writes a scoped tool-execution audit record.
