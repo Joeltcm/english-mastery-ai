@@ -31,5 +31,8 @@ export async function POST(request: Request) {
     db.vocabularyReview.create({ data: { userId, vocabularyId, rating: rating as ReviewRating, responseMs } }),
     db.vocabularyItem.update({ where: { id: vocabularyId }, data: { repetitions: nextRepetitions, easeFactor: nextEase, intervalDays: nextInterval, nextReviewAt } }),
   ]);
+  const delta = { AGAIN: -2, HARD: -1, GOOD: 1, EASY: 2 }[rating];
+  const profile = await db.learningProfile.findUnique({ where: { userId }, select: { vocabularyScore: true } });
+  await db.learningProfile.upsert({ where: { userId }, update: { vocabularyScore: Math.max(0, Math.min(100, (profile?.vocabularyScore ?? 48) + delta)) }, create: { userId, vocabularyScore: Math.max(0, Math.min(100, 48 + delta)) } });
   return NextResponse.json({ saved: true, nextReviewAt, intervalDays: nextInterval });
 }

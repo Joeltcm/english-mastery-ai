@@ -3,8 +3,8 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { db } from "@/lib/prisma";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { recordStudySession } from "@/lib/study";
 
 const studySessionSchema = z.object({
   activity: z.string().trim().min(2).max(80),
@@ -21,6 +21,6 @@ export async function POST(request: Request) {
   const parsed = studySessionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "The study session details are invalid." }, { status: 400 });
   const metadata = parsed.data.metadata ? parsed.data.metadata as Prisma.InputJsonValue : undefined;
-  const created = await db.studySession.create({ data: { userId: session.user.id, activity: parsed.data.activity, minutes: parsed.data.minutes, completedAt: new Date(), metadata } });
-  return NextResponse.json({ saved: true, id: created.id }, { status: 201 });
+  const recorded = await recordStudySession(session.user.id, { activity: parsed.data.activity, minutes: parsed.data.minutes, metadata });
+  return NextResponse.json({ saved: true, id: recorded.created.id, totalStudyMinutes: recorded.totalStudyMinutes, currentStreak: recorded.currentStreak }, { status: 201 });
 }
