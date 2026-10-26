@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { focusVocabulary } from "@/lib/vocabulary";
 
 export async function GET() {
@@ -10,6 +11,8 @@ export async function GET() {
   if (!process.env.DATABASE_URL) return NextResponse.json({ items: [], databaseConfigured: false });
 
   const userId = session.user.id;
+  const rate = await consumePersistentRateLimit(`vocabulary-sync:${userId}`, 30, 3_600_000);
+  if (!rate.allowed) return NextResponse.json({ error: `Too many vocabulary syncs. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   await db.vocabularyItem.createMany({
     data: focusVocabulary.map((item) => ({ userId, term: item.term, translation: item.translation, example: item.example, pronunciation: item.pronunciation })),
     skipDuplicates: true,
