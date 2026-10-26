@@ -1,5 +1,5 @@
 const CACHE_NAME = "english-mastery-shell-v4";
-const APP_SHELL = ["/offline.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
+const APP_SHELL = ["/offline.html", "/manifest.webmanifest", "/icon-pwa-192.png", "/icon-pwa-512.png", "/icon-pwa-180.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
