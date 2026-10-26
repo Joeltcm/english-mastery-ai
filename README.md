@@ -40,6 +40,7 @@ npm run typecheck
 npm test
 npm run build
 npm run deploy:preflight
+npm audit --omit=dev --audit-level=high
 ```
 
 ## Environment variables
