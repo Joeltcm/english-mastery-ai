@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to save pronunciation results." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "PostgreSQL is not configured." }, { status: 503 });
   if (!process.env.AZURE_SPEECH_KEY || !process.env.AZURE_SPEECH_REGION) return NextResponse.json({ error: "Specialized pronunciation scoring is not configured yet. No score was generated." }, { status: 503 });
-  const rate = consumeRateLimit(`pronunciation:${session.user.id}`, 20);
+  const rate = await consumePersistentRateLimit(`pronunciation:${session.user.id}`, 20);
   if (!rate.allowed) return NextResponse.json({ error: `Too many pronunciation attempts. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
 
   const form = await request.formData().catch(() => null);

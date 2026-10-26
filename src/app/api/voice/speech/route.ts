@@ -2,13 +2,13 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to use the voice coach." }, { status: 401 });
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "OpenAI voice is not configured." }, { status: 503 });
-  const rate = consumeRateLimit(`voice-speech:${session.user.id}`, 30);
+  const rate = await consumePersistentRateLimit(`voice-speech:${session.user.id}`, 30);
   if (!rate.allowed) return NextResponse.json({ error: `Too many voice requests. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const body = await request.json().catch(() => null) as { text?: unknown } | null;
   const text = typeof body?.text === "string" ? body.text.trim() : "";
