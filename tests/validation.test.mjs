@@ -55,6 +55,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "scripts/deploy-preflight.mjs"), "utf8"), /gitRemoteConfigured/);
   assert.match(readFileSync(join(root, "src/app/api/assessment/route.ts"), "utf8"), /sessionsSinceAssessment/);
   assert.match(readFileSync(join(root, "src/app/api/lessons/route.ts"), "utf8"), /orderedLessons/);
+  assert.match(readFileSync(join(root, "src/app/api/lessons/[slug]/attempt/route.ts"), "utf8"), /timeZone: parsed.data.timezone/);
   assert.match(readFileSync(join(root, "src/components/privacy-controls.tsx"), "utf8"), /saveMemoryEdit/);
   assert.match(readFileSync(join(root, "src/app/api/account/route.ts"), "utf8"), /rateLimitBucket\.deleteMany/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /setMessages\(starterMessages\)/);

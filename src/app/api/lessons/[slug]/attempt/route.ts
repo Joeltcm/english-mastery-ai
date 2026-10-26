@@ -6,7 +6,7 @@ import { db } from "@/lib/prisma";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { recordStudySession } from "@/lib/study";
 
-const attemptSchema = z.object({ score: z.number().int().min(0).max(100).optional(), answers: z.array(z.object({ prompt: z.string().max(200), answer: z.string().max(500), correct: z.boolean() })).max(50).optional() });
+const attemptSchema = z.object({ score: z.number().int().min(0).max(100).optional(), answers: z.array(z.object({ prompt: z.string().max(200), answer: z.string().max(500), correct: z.boolean() })).max(50).optional(), timezone: z.string().trim().max(100).optional() });
 
 export async function POST(request: Request, context: { params: Promise<{ slug: string }> }) {
   const session = await auth();
@@ -20,7 +20,7 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
   const lesson = await db.lesson.findUnique({ where: { slug }, select: { id: true, estimatedMin: true, type: true } });
   if (!lesson) return NextResponse.json({ error: "Lesson not found." }, { status: 404 });
   const attempt = await db.lessonAttempt.create({ data: { userId: session.user.id, lessonId: lesson.id, score: parsed.data.score, answers: parsed.data.answers, completedAt: new Date() } });
-  await recordStudySession(session.user.id, { activity: "adaptive-lesson", minutes: lesson.estimatedMin, metadata: { lessonSlug: slug, score: parsed.data.score ?? null } });
+  await recordStudySession(session.user.id, { activity: "adaptive-lesson", minutes: lesson.estimatedMin, timeZone: parsed.data.timezone, metadata: { lessonSlug: slug, score: parsed.data.score ?? null } });
   if (parsed.data.score !== undefined) {
     const profile = await db.learningProfile.findUnique({ where: { userId: session.user.id }, select: { grammarScore: true, vocabularyScore: true } });
     const field = lesson.type === "VOCABULARY" ? "vocabularyScore" : "grammarScore";

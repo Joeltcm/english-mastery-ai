@@ -27,7 +27,7 @@ export function AdaptiveLessonGrid({ onStart, user, onSignIn }: { onStart: (prom
   async function markPracticed(lesson: Lesson) {
     if (!user) { onSignIn(); return; }
     setSavingSlug(lesson.slug);
-    const response = await fetch(`/api/lessons/${lesson.slug}/attempt`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    const response = await fetch(`/api/lessons/${lesson.slug}/attempt`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) });
     if (response.ok) setLessons((current) => current.map((item) => item.slug === lesson.slug ? { ...item, attemptCount: item.attemptCount + 1, recommended: false } : item));
     setSavingSlug(null);
   }
