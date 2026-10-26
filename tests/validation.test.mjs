@@ -35,6 +35,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model RateLimitBucket/);
   assert.match(readFileSync(join(root, "railway.retention.toml"), "utf8"), /cronSchedule/);
   assert.match(readFileSync(join(root, "scripts/run-retention.mjs"), "utf8"), /CRON_SECRET/);
+  assert.match(readFileSync(join(root, "scripts/deploy-preflight.mjs"), "utf8"), /missingRequiredEnvironment/);
   assert.match(readFileSync(join(root, "src/app/api/assessment/route.ts"), "utf8"), /sessionsSinceAssessment/);
   assert.match(readFileSync(join(root, "src/components/privacy-controls.tsx"), "utf8"), /saveMemoryEdit/);
 });
