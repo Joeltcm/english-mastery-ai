@@ -71,6 +71,10 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /text-conversation/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /studyActivity/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /timeZone: timezone/);
+  assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /input_image/);
+  assert.match(readFileSync(join(root, "src/lib/validation.ts"), "utf8"), /imageDataSchema/);
+  assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /imageInputRef/);
+  assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /image-attachment/);
   assert.match(readFileSync(join(root, "src/lib/study.ts"), "utf8"), /calculateStudyStreak/);
   assert.match(readFileSync(join(root, "src/app/api/study-sessions/route.ts"), "utf8"), /timezone/);
   assert.doesNotMatch(readFileSync(join(root, "src/components/voice-practice.tsx"), "utf8"), /activity: "voice-conversation"/);

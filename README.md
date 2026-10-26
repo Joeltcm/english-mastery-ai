@@ -53,6 +53,7 @@ npm audit --omit=dev --audit-level=high
 | `OPENAI_MODEL` | Optional | Model used by the Responses API; defaults to `gpt-5.5` |
 | `OPENAI_TTS_MODEL` | Optional | TTS model for the voice coach; defaults to `gpt-4o-mini-tts` |
 | `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
+| `OPENAI_VISION_MODEL` | Optional | Vision-capable model for image analysis; falls back to `OPENAI_MODEL` |
 | `OPENAI_REALTIME_MODEL` | Optional | Low-latency Realtime model; defaults to `gpt-realtime` |
 | `AZURE_SPEECH_KEY` | Optional | Server-only Azure Speech key for specialized pronunciation assessment |
 | `AZURE_SPEECH_REGION` | Optional | Azure Speech resource region |
@@ -81,6 +82,7 @@ npm audit --omit=dev --audit-level=high
 - Responsive light/dark application shell with sidebar navigation.
 - Overview dashboard with daily goal, streak, study time, level, and skill snapshot.
 - Agent Assistant, English Tutor, and Smart Learning modes. Agent Assistant understands safe natural-language commands such as “show my progress”, “open my learning path”, “start tutor practice”, and “open settings” in typed chat, browser dictation, and live Realtime voice.
+- Agent Assistant image analysis for JPG, PNG, WEBP, and GIF files up to 3 MB. Images are sent only for the current response and are not stored in conversation history; the assistant can describe visible content, read English text, explain exercises, and extract contextual vocabulary.
 - Supportive correction instructions, including corrected sentence, natural alternative, and concise Spanish explanation when relevant.
 - Active learning focus on irregular verbs and contextual vocabulary across travel, daily life, work/technology, and international conversations.
 - Auth.js credentials sign-in and registration with user-scoped data access.
