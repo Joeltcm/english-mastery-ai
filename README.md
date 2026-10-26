@@ -91,6 +91,7 @@ npm run deploy:preflight
 - Periodic check-ins become due after seven recorded study sessions following the latest assessment.
 - Travel role-play launcher for airport, hotel, and international work situations, connected to Tutor mode.
 - Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
+- Correction history is captured only when the tutor emits an explicit correction block and is surfaced in the grammar progress view.
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
 - User-approved memories can be created, edited, and deleted from Settings.
 - Installable PWA manifest, icon, service-worker registration, and offline shell fallback.

@@ -3,6 +3,8 @@
 import { BrainCircuit, LoaderCircle, Mic, Pause, Radio, Send, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { extractCorrection } from "@/lib/corrections";
+
 type Mode = "ASSISTANT" | "TUTOR" | "SMART";
 type User = { name?: string | null; email?: string | null } | null;
 type VoiceMessage = { id: string; role: "user" | "assistant"; content: string };
@@ -141,6 +143,8 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
         }
       }
       await speak(reply);
+      const correction = extractCorrection(reply);
+      if (correction) void fetch("/api/grammar-errors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ originalText: message, correctedText: correction.correctedText, naturalAlternative: correction.naturalAlternative, explanationEs: correction.explanationEs }) }).catch(() => undefined);
       void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "voice-conversation", minutes: Math.max(1, Math.min(15, Math.ceil((Date.now() - turnStartedAt) / 60_000))), metadata: { mode, messageLength: message.length } }) }).catch(() => undefined);
     } catch (caught) {
       const messageError = caught instanceof Error ? caught.message : "The voice coach could not respond.";
