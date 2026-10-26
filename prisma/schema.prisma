@@ -77,6 +77,15 @@ model User {
   aiUsageEvents         AiUsageEvent[]
 }
 
+model RateLimitBucket {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  count     Int      @default(0)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+  @@index([resetAt])
+}
+
 model Account {
   userId            String
   type              String

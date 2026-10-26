@@ -1,6 +1,6 @@
 "use client";
 
-import { BrainCircuit, LoaderCircle, Mic, Pause, Send, Volume2, X } from "lucide-react";
+import { BrainCircuit, LoaderCircle, Mic, Pause, Radio, Send, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Mode = "ASSISTANT" | "TUTOR" | "SMART";
@@ -10,6 +10,7 @@ type RecognitionResult = { isFinal: boolean; 0: { transcript: string } };
 type RecognitionEvent = Event & { results: { length: number; [index: number]: RecognitionResult } };
 type Recognition = { lang: string; interimResults: boolean; continuous: boolean; onresult: ((event: RecognitionEvent) => void) | null; onstart: (() => void) | null; onend: (() => void) | null; onerror: ((event: { error?: string }) => void) | null; start: () => void; stop: () => void };
 type RecognitionConstructor = new () => Recognition;
+type RealtimeStatus = "idle" | "connecting" | "connected" | "error";
 
 const voiceIntro: VoiceMessage = { id: "voice-intro", role: "assistant", content: "Hi! Speak naturally. I’ll answer in English, keep the conversation moving, and gently help you improve when it matters." };
 
@@ -27,11 +28,69 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
     return Boolean(browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition);
   });
   const [audioSource, setAudioSource] = useState<"ai" | "browser">("browser");
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("idle");
+  const [realtimeTranscript, setRealtimeTranscript] = useState("");
   const recognitionRef = useRef<Recognition | null>(null);
+  const realtimeConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeChannelRef = useRef<RTCDataChannel | null>(null);
+  const realtimeStreamRef = useRef<MediaStream | null>(null);
+  const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimeStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
-    return () => { recognitionRef.current?.stop(); window.speechSynthesis?.cancel(); };
+    return () => { recognitionRef.current?.stop(); realtimeChannelRef.current?.close(); realtimeConnectionRef.current?.close(); realtimeStreamRef.current?.getTracks().forEach((track) => track.stop()); window.speechSynthesis?.cancel(); };
   }, []);
+
+  function stopRealtime() {
+    const startedAt = realtimeStartedAtRef.current;
+    if (user && startedAt) {
+      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "realtime-voice", minutes: Math.max(1, Math.min(60, Math.ceil((Date.now() - startedAt) / 60_000))), metadata: { mode } }) }).catch(() => undefined);
+    }
+    realtimeChannelRef.current?.close();
+    realtimeConnectionRef.current?.close();
+    realtimeStreamRef.current?.getTracks().forEach((track) => track.stop());
+    if (realtimeAudioRef.current) realtimeAudioRef.current.srcObject = null;
+    realtimeChannelRef.current = null;
+    realtimeConnectionRef.current = null;
+    realtimeStreamRef.current = null;
+    realtimeAudioRef.current = null;
+    realtimeStartedAtRef.current = null;
+    setRealtimeStatus("idle");
+  }
+
+  async function startRealtime() {
+    if (!user) { onSignIn(); return; }
+    if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) { setError("Live audio is not available in this browser. You can use the regular microphone button or type below."); setRealtimeStatus("error"); return; }
+    stopListening();
+    setError(""); setRealtimeStatus("connecting");
+    try {
+      const tokenResponse = await fetch("/api/voice/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
+      const tokenData = await tokenResponse.json().catch(() => ({}));
+      if (!tokenResponse.ok) throw new Error(tokenData.error || "Live voice could not start.");
+      const ephemeralKey = tokenData.value || tokenData.client_secret?.value;
+      if (!ephemeralKey) throw new Error("Live voice did not return a temporary session key.");
+      const connection = new RTCPeerConnection();
+      const audio = new Audio(); audio.autoplay = true; realtimeAudioRef.current = audio;
+      connection.ontrack = (event) => { audio.srcObject = event.streams[0]; void audio.play().catch(() => undefined); };
+      connection.onconnectionstatechange = () => { if (connection.connectionState === "failed") { setRealtimeStatus("error"); setError("The live audio connection was interrupted. Try starting it again."); } };
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => connection.addTrack(track, stream));
+      const channel = connection.createDataChannel("oai-events");
+      channel.onmessage = (event) => {
+        const payload = JSON.parse(event.data) as { type?: string; transcript?: string };
+        if (payload.transcript) setRealtimeTranscript(payload.transcript);
+        if ((payload.type === "response.audio_transcript.done" || payload.type === "response.output_audio_transcript.done") && payload.transcript) setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant" as const, content: payload.transcript as string }].slice(-6));
+      };
+      const offer = await connection.createOffer(); await connection.setLocalDescription(offer);
+      const answerResponse = await fetch("https://api.openai.com/v1/realtime/calls", { method: "POST", headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" }, body: offer.sdp });
+      if (!answerResponse.ok) throw new Error("Live voice could not negotiate an audio connection.");
+      await connection.setRemoteDescription({ type: "answer", sdp: await answerResponse.text() });
+      realtimeConnectionRef.current = connection; realtimeChannelRef.current = channel; realtimeStreamRef.current = stream; realtimeStartedAtRef.current = Date.now(); setRealtimeStatus("connected"); setAudioSource("ai"); setTranscript("Live audio is connected. Start speaking naturally.");
+    } catch (caught) {
+      realtimeConnectionRef.current?.close(); realtimeStreamRef.current?.getTracks().forEach((track) => track.stop());
+      setRealtimeStatus("error"); setError(caught instanceof Error ? caught.message : "Live voice could not start.");
+    }
+  }
 
   async function speak(text: string) {
     if (!text.trim()) return;
@@ -62,6 +121,7 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
     const message = rawText.trim();
     if (!message || isSending) return;
     if (!user) { onSignIn(); return; }
+    const turnStartedAt = Date.now();
     setError(""); setTranscript(message); setDraft(""); setIsSending(true);
     const userMessage: VoiceMessage = { id: crypto.randomUUID(), role: "user", content: message };
     const assistantMessage: VoiceMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
@@ -81,6 +141,7 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
         }
       }
       await speak(reply);
+      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "voice-conversation", minutes: Math.max(1, Math.min(15, Math.ceil((Date.now() - turnStartedAt) / 60_000))), metadata: { mode, messageLength: message.length } }) }).catch(() => undefined);
     } catch (caught) {
       const messageError = caught instanceof Error ? caught.message : "The voice coach could not respond.";
       setError(messageError);
@@ -90,6 +151,7 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
 
   function startListening() {
     if (!user) { onSignIn(); return; }
+    if (realtimeStatus === "connected" || realtimeStatus === "connecting") stopRealtime();
     const browserWindow = window as Window & { SpeechRecognition?: RecognitionConstructor; webkitSpeechRecognition?: RecognitionConstructor };
     const Constructor = browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition;
     if (!Constructor) { setSupported(false); setError("Speech recognition is not available in this browser. You can type below, or use Chrome or Edge for voice input."); return; }
@@ -104,5 +166,5 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
 
   function stopListening() { recognitionRef.current?.stop(); setIsListening(false); }
 
-  return <div className="modal-backdrop voice-backdrop" role="presentation"><div className="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-title"><button className="icon-button dialog-close" onClick={onClose} aria-label="Close voice practice"><X size={18} /></button><div className="voice-header"><div className="voice-icon"><Mic size={20} /></div><div><span className="eyebrow">VOICE PRACTICE</span><h2 id="voice-title">Speak naturally</h2><p>Have a real conversation in {mode === "TUTOR" ? "tutor" : "smart learning"} mode.</p></div></div><div className="voice-disclosure"><Volume2 size={14} /> Replies can use an AI-generated voice when OpenAI audio is configured; browser voice is used as a local fallback.</div><div className="voice-messages">{messages.slice(-4).map((message) => <div className={message.role === "user" ? "voice-message user" : "voice-message"} key={message.id}><span className="voice-message-icon">{message.role === "assistant" ? <BrainCircuit size={14} /> : <Mic size={14} />}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div>)}</div><div className="voice-listening-card"><div className={isListening ? "voice-pulse active" : "voice-pulse"}><Mic size={22} /></div><div><strong>{isListening ? "Listening…" : isSending ? "Preparing your reply…" : "Your turn to speak"}</strong><small>{transcript || (supported ? "Press the microphone and say a complete sentence." : "Voice input is unavailable here; type your sentence below.")}</small></div>{isListening ? <button className="voice-stop" onClick={stopListening}><Pause size={16} /> Stop</button> : <button className="voice-start" onClick={startListening} disabled={isSending}><Mic size={16} /> Speak</button>}</div><form className="voice-composer" onSubmit={(event) => { event.preventDefault(); void sendVoiceMessage(draft); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Or type what you want to say…" disabled={isSending} /><button className="send-button" disabled={!draft.trim() || isSending} aria-label="Send voice message">{isSending ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}</button></form>{error && <p className="voice-error">{error}</p>}<div className="voice-footer"><span>{audioSource === "ai" ? "AI voice active" : "Browser voice fallback"}</span><span>Always review and repeat the sentence aloud.</span></div></div></div>;
+  return <div className="modal-backdrop voice-backdrop" role="presentation"><div className="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-title"><button className="icon-button dialog-close" onClick={() => { stopRealtime(); onClose(); }} aria-label="Close voice practice"><X size={18} /></button><div className="voice-header"><div className="voice-icon"><Mic size={20} /></div><div><span className="eyebrow">VOICE PRACTICE</span><h2 id="voice-title">Speak naturally</h2><p>Have a real conversation in {mode === "TUTOR" ? "tutor" : "smart learning"} mode.</p></div></div><div className="voice-disclosure"><Volume2 size={14} /> Replies can use an AI-generated voice when OpenAI audio is configured; browser voice is used as a local fallback.<button className="soft-button" onClick={realtimeStatus === "connected" ? stopRealtime : startRealtime} disabled={realtimeStatus === "connecting"}>{realtimeStatus === "connected" ? <><Radio size={14} /> End live audio</> : <><Radio size={14} /> {realtimeStatus === "connecting" ? "Connecting…" : "Start live audio"}</>}</button></div><div className="voice-messages">{messages.slice(-4).map((message) => <div className={message.role === "user" ? "voice-message user" : "voice-message"} key={message.id}><span className="voice-message-icon">{message.role === "assistant" ? <BrainCircuit size={14} /> : <Mic size={14} />}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div>)}</div><div className="voice-listening-card"><div className={isListening || realtimeStatus === "connected" ? "voice-pulse active" : "voice-pulse"}><Mic size={22} /></div><div><strong>{realtimeStatus === "connected" ? "Live audio is on" : isListening ? "Listening…" : isSending ? "Preparing your reply…" : "Your turn to speak"}</strong><small>{realtimeTranscript || transcript || (supported ? "Press the microphone and say a complete sentence." : "Voice input is unavailable here; type your sentence below.")}</small></div>{isListening ? <button className="voice-stop" onClick={stopListening}><Pause size={16} /> Stop</button> : <button className="voice-start" onClick={startListening} disabled={isSending || realtimeStatus === "connected"}><Mic size={16} /> Speak</button>}</div><form className="voice-composer" onSubmit={(event) => { event.preventDefault(); void sendVoiceMessage(draft); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Or type what you want to say…" disabled={isSending || realtimeStatus === "connected"} /><button className="send-button" disabled={!draft.trim() || isSending || realtimeStatus === "connected"} aria-label="Send voice message">{isSending ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}</button></form>{error && <p className="voice-error">{error}</p>}<div className="voice-footer"><span>{realtimeStatus === "connected" || audioSource === "ai" ? "AI voice active" : "Browser voice fallback"}</span><span>Always review and repeat the sentence aloud.</span></div></div></div>;
 }

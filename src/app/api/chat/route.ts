@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { buildSystemPrompt } from "@/lib/learning";
 import { db } from "@/lib/prisma";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { estimateCostUsd, monthStart, monthlyBudgetDefault } from "@/lib/usage";
 import { chatRequestSchema } from "@/lib/validation";
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to start a private conversation." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "Connect PostgreSQL in .env.local before chatting." }, { status: 503 });
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Add OPENAI_API_KEY in .env.local before chatting." }, { status: 503 });
-  const rate = consumeRateLimit(`chat:${session.user.id}`);
+  const rate = await consumePersistentRateLimit(`chat:${session.user.id}`);
   if (!rate.allowed) return NextResponse.json({ error: `Too many requests. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Your message or mode is invalid." }, { status: 400 });

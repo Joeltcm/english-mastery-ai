@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronRight, RotateCcw, Sparkles, Volume2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { focusVocabulary } from "@/lib/vocabulary";
 
@@ -22,8 +22,10 @@ export function VocabularyPractice({ user }: { user: User }) {
   const [reviewed, setReviewed] = useState(0);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const lastStudyReportAt = useRef(0);
 
   useEffect(() => {
+    if (!lastStudyReportAt.current) lastStudyReportAt.current = Date.now();
     if (!user) return;
     let cancelled = false;
     fetch("/api/vocabulary")
@@ -49,7 +51,15 @@ export function VocabularyPractice({ user }: { user: User }) {
 
   async function rate(rating: Rating) {
     if (!current) return;
-    setReviewed((value) => value + 1);
+    setReviewed((value) => {
+      const next = value + 1;
+      if (user && next % 5 === 0) {
+        const minutes = Math.max(1, Math.min(60, Math.ceil((Date.now() - lastStudyReportAt.current) / 60_000)));
+        lastStudyReportAt.current = Date.now();
+        void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "vocabulary-review", minutes, metadata: { cardsReviewed: 5, context, rating } }) }).catch(() => undefined);
+      }
+      return next;
+    });
     setFeedback(rating === "EASY" ? "Great recall — this one can wait longer." : rating === "GOOD" ? "Nice. We’ll bring it back later." : rating === "HARD" ? "No problem. We’ll recycle it soon." : "That’s useful information. Let’s try it again.");
     if (!current.id.startsWith("local-")) {
       await fetch("/api/vocabulary/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vocabularyId: current.id, rating }) }).catch(() => undefined);

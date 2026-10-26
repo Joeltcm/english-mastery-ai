@@ -20,11 +20,15 @@ test("learning and privacy surfaces are present", () => {
     "src/app/api/account/route.ts",
     "src/app/api/memories/route.ts",
     "src/app/api/voice/speech/route.ts",
+    "src/app/api/voice/realtime/route.ts",
     "src/app/api/pronunciation/assess/route.ts",
+    "src/app/api/study-sessions/route.ts",
+    "src/app/api/maintenance/retention/route.ts",
   ];
   for (const route of routes) assert.equal(readFileSync(join(root, route), "utf8").length > 0, true, route);
   const manifest = JSON.parse(readFileSync(join(root, "public/manifest.webmanifest"), "utf8"));
   assert.equal(manifest.display, "standalone");
   assert.equal(manifest.start_url, "/");
   assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model AiUsageEvent/);
+  assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model RateLimitBucket/);
 });

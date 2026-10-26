@@ -51,12 +51,15 @@ npm run build
 | `OPENAI_MODEL` | Optional | Model used by the Responses API; defaults to `gpt-5.5` |
 | `OPENAI_TTS_MODEL` | Optional | TTS model for the voice coach; defaults to `gpt-4o-mini-tts` |
 | `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
+| `OPENAI_REALTIME_MODEL` | Optional | Low-latency Realtime model; defaults to `gpt-realtime` |
 | `AZURE_SPEECH_KEY` | Optional | Server-only Azure Speech key for specialized pronunciation assessment |
 | `AZURE_SPEECH_REGION` | Optional | Azure Speech resource region |
 | `AI_DEFAULT_MONTHLY_BUDGET_USD` | Optional | Default per-user estimated AI budget; defaults to `5` |
 | `OPENAI_INPUT_COST_PER_MILLION_USD` | Optional | Current input-token price used for budget estimates |
 | `OPENAI_OUTPUT_COST_PER_MILLION_USD` | Optional | Current output-token price used for budget estimates |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
+| `CRON_SECRET` | Required for retention cleanup | Secret for the scheduled privacy-maintenance request |
+| `DATA_RETENTION_DAYS` | Optional | Retention window for AI usage and tool-execution logs; defaults to `365` and is clamped to 30–3650 days |
 
 ## Implemented
 
@@ -71,10 +74,11 @@ npm run build
 - Optional web research toggle; search is off by default, requires an explicit user action, and writes a scoped tool-execution audit record.
 - Text-note assistance for `.txt`, `.md`, `.csv`, and `.json` attachments, inserted locally into the next user prompt.
 - Voice practice: browser speech recognition, streamed tutor replies, server-side AI speech when configured, and browser speech fallback.
+- Low-latency live voice via WebRTC and an ephemeral server-issued Realtime session key when OpenAI Realtime is configured; the prior turn-based voice flow remains available as fallback.
 - Specialized pronunciation assessment adapter using Azure Speech when both Azure variables are configured; without them the UI reports that no score is available.
 - An interactive irregular-verb deck with travel, daily life, work, technology, and international context filters.
 - Spaced-review ratings (`Again`, `Hard`, `Good`, `Easy`) persisted through user-scoped vocabulary APIs when PostgreSQL is connected.
-- Basic in-memory rate limiting and request validation.
+- Persistent PostgreSQL-backed rate limiting for registration and chat, with an in-memory fallback for local/offline development.
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
 - Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
@@ -83,7 +87,9 @@ npm run build
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
 - Installable PWA manifest, icon, service-worker registration, and offline shell fallback.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
+- Study-session recording connected to assessments, vocabulary recall blocks, and voice turns so progress reflects completed activity.
+- Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.
 
 ## Remaining work
 
-Remaining production work is live credential/deployment verification, persistent distributed rate limiting, privacy retention scheduling, and a low-latency realtime audio transport. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
+Remaining production work is live credential/deployment verification and scheduling the retention endpoint in the hosting provider. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
