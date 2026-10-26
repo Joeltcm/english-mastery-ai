@@ -46,7 +46,8 @@ export function AssessmentCard({ user }: { user: User }) {
     const next = { level, overall, grammar, vocabulary }; setResult(next); setStarted(false); setError("");
     if (user) {
       const elapsedMinutes = Math.max(1, Math.min(30, Math.ceil((Date.now() - (startedAtRef.current || Date.now())) / 60_000)));
-      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "initial-assessment", minutes: elapsedMinutes, metadata: { questionCount: questions.length } }) }).catch(() => undefined);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "initial-assessment", minutes: elapsedMinutes, timezone, metadata: { questionCount: questions.length } }) }).catch(() => undefined);
     }
     if (user) fetch("/api/assessment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: assessmentKind, level, scores: next, answers: correctAnswers }) }).then(async (response) => { const data = await response.json().catch(() => ({})); setSaved(response.ok && Boolean(data.saved)); setSaveAttempted(true); setHasAssessment(true); setAssessmentDue(false); }).catch(() => setSaveAttempted(true));
   }

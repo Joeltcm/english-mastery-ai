@@ -48,7 +48,8 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
     if (user && startedAt) {
       const durationSeconds = Math.max(1, Math.min(7_200, Math.ceil((Date.now() - startedAt) / 1_000)));
       void fetch("/api/voice/realtime/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ durationSeconds, mode }) }).catch(() => undefined);
-      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "realtime-voice", minutes: Math.max(1, Math.min(60, Math.ceil(durationSeconds / 60))), metadata: { mode } }) }).catch(() => undefined);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "realtime-voice", minutes: Math.max(1, Math.min(60, Math.ceil(durationSeconds / 60))), timezone, metadata: { mode } }) }).catch(() => undefined);
     }
     realtimeChannelRef.current?.close();
     realtimeConnectionRef.current?.close();
@@ -131,7 +132,8 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
     const assistantMessage: VoiceMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
     setMessages((current) => [...current, userMessage, assistantMessage]);
     try {
-      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId, message, mode, studyActivity: "voice-conversation" }) });
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId, message, mode, studyActivity: "voice-conversation", timezone }) });
       if (!response.ok || !response.body) { const data = await response.json().catch(() => ({})); throw new Error(data.error || "The voice coach could not respond."); }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; let reply = "";
       while (true) {

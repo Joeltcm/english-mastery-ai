@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Your message or mode is invalid." }, { status: 400 });
 
-  const { conversationId, message, mode, webResearch, studyActivity } = parsed.data;
+  const { conversationId, message, mode, webResearch, studyActivity, timezone } = parsed.data;
   const userId = session.user.id;
   if (webResearch) {
     const permission = await db.toolConnection.findUnique({ where: { userId_provider: { userId, provider: "web_research" } }, select: { enabled: true } });
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
             await recordStudySession(userId, {
               activity: studyActivity || "text-conversation",
               minutes: 1,
+              timeZone: timezone,
               metadata: { mode, conversationId: conversation.id, messageLength: message.length, source: studyActivity ? "voice-practice" : "chat" },
             }).catch(() => undefined);
           }

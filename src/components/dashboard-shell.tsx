@@ -171,7 +171,8 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     setMessages((current) => [...current, userMessage, assistantMessage]); setDraft(""); setIsSending(true);
     let assistantText = "";
     try {
-      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId, message, mode, webResearch }) });
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId, message, mode, webResearch, timezone }) });
       if (!response.ok || !response.body) { const data = await response.json().catch(() => ({})); throw new Error(data.error || "The assistant could not respond."); }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) {

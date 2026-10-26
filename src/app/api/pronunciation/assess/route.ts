@@ -18,6 +18,7 @@ export async function POST(request: Request) {
   const form = await request.formData().catch(() => null);
   const audio = form?.get("audio");
   const referenceText = typeof form?.get("referenceText") === "string" ? String(form?.get("referenceText")).trim() : "";
+  const timezone = typeof form?.get("timezone") === "string" ? String(form?.get("timezone")).trim() : undefined;
   if (!(audio instanceof File) || !audio.size || audio.size > MAX_AUDIO_BYTES) return NextResponse.json({ error: "Upload a WAV or OGG recording up to 10 MB." }, { status: 400 });
   if (!referenceText || referenceText.length > 500) return NextResponse.json({ error: "Add a short reference sentence." }, { status: 400 });
   const contentType = audio.type.includes("ogg") ? "audio/ogg; codecs=opus" : audio.type.includes("wav") ? "audio/wav; codecs=audio/pcm; samplerate=16000" : "";
@@ -36,6 +37,6 @@ export async function POST(request: Request) {
   if (!azureResponse.ok || !best || typeof best.PronScore !== "number") return NextResponse.json({ error: "The pronunciation provider could not assess this recording. No score was saved." }, { status: 502 });
   const feedback = JSON.parse(JSON.stringify({ accuracy: best.AccuracyScore ?? null, fluency: best.FluencyScore ?? null, completeness: best.CompletenessScore ?? null, prosody: best.ProsodyScore ?? null, words: best.Words ?? [] }));
   const attempt = await db.pronunciationAttempt.create({ data: { userId: session.user.id, prompt: referenceText, transcript: best.Display || null, provider: "azure-speech-pronunciation", score: best.PronScore, feedback } });
-  await recordStudySession(session.user.id, { activity: "voice-conversation", minutes: 1, metadata: { pronunciationAttemptId: attempt.id, provider: "azure-speech-pronunciation" } });
+  await recordStudySession(session.user.id, { activity: "voice-conversation", minutes: 1, timeZone: timezone, metadata: { pronunciationAttemptId: attempt.id, provider: "azure-speech-pronunciation" } });
   return NextResponse.json({ score: attempt.score, transcript: attempt.transcript, feedback, attemptId: attempt.id });
 }

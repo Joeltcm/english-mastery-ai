@@ -63,7 +63,8 @@ export function VocabularyPractice({ user }: { user: User }) {
       if (user && next % 5 === 0) {
         const minutes = Math.max(1, Math.min(60, Math.ceil((Date.now() - lastStudyReportAt.current) / 60_000)));
         lastStudyReportAt.current = Date.now();
-        void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "vocabulary-review", minutes, metadata: { cardsReviewed: 5, context, rating } }) }).catch(() => undefined);
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "vocabulary-review", minutes, timezone, metadata: { cardsReviewed: 5, context, rating } }) }).catch(() => undefined);
       }
       return next;
     });
