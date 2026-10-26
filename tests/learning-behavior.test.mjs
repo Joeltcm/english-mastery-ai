@@ -48,3 +48,10 @@ test("adaptive lesson ordering prioritizes pending lessons in the weaker focus",
   ];
   assert.deepEqual(orderLessons(lessons, "vocabulary").map((lesson) => lesson.slug), ["pending-vocabulary", "pending-mixed", "done-grammar"]);
 });
+
+test("progress date helpers respect the learner time zone", async () => {
+  const { localDateKey, startOfLocalDay } = await loadTypeScriptModule("src/lib/time.ts");
+  const latePanamaNight = new Date("2026-10-26T04:00:00.000Z");
+  assert.equal(localDateKey(latePanamaNight, "America/Panama"), "2026-10-25");
+  assert.equal(startOfLocalDay(latePanamaNight, "America/Panama").toISOString(), "2026-10-25T05:00:00.000Z");
+});
