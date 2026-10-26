@@ -1,6 +1,6 @@
 # English Mastery AI
 
-English Mastery AI is a production-oriented personal AI assistant and adaptive English-learning companion. The current local build includes a responsive workspace, secure account flow, PostgreSQL/Prisma data model, private conversation persistence, streaming OpenAI responses, voice practice, contextual verb reviews, assessment, privacy controls, and PWA support.
+English Mastery AI is a production-oriented personal AI assistant and adaptive English-learning companion. The current local build includes a responsive workspace, secure account flow, PostgreSQL/Prisma data model, private conversation persistence, streaming DeepSeek responses, local browser voice practice, contextual verb reviews, assessment, privacy controls, and PWA support.
 
 ## Architecture
 
@@ -8,13 +8,14 @@ English Mastery AI is a production-oriented personal AI assistant and adaptive E
 - Route Handlers for authentication, health, conversations, streaming chat, adaptive lessons, assessment, progress, profile, vocabulary reviews, privacy, memory, and voice speech
 - Auth.js credentials provider with JWT sessions and bcrypt password hashing
 - Prisma ORM with PostgreSQL schema and versioned initial migration
-- OpenAI Responses API called only from the server; streamed with SSE to the client, with optional server-side TTS
+- DeepSeek Responses API called only from the server; streamed with SSE to the client, with vision and optional DeepSeek web search
+- Browser-native speech recognition and speech synthesis for no-cost voice practice; no server-side audio provider is required
 - Railway configuration includes Prisma client generation, migration deployment, and health checks
 
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Set `DATABASE_URL`, `AUTH_SECRET`, and `OPENAI_API_KEY`.
+2. Set `DATABASE_URL`, `AUTH_SECRET`, and `DEEPSEEK_API_KEY`.
 3. Create or connect a PostgreSQL database.
 4. Apply the schema:
 
@@ -30,7 +31,7 @@ English Mastery AI is a production-oriented personal AI assistant and adaptive E
    npm run dev
    ```
 
-Open <http://localhost:3000>. The `/api/health` endpoint reports whether the database, Auth.js secret, and OpenAI credentials are configured. The dashboard can render without credentials, but account creation and AI chat require the corresponding services.
+Open <http://localhost:3000>. The `/api/health` endpoint reports whether the database, Auth.js secret, and DeepSeek credentials are configured. The dashboard can render without credentials, but account creation and AI chat require the corresponding services.
 
 ## Commands
 
@@ -49,22 +50,18 @@ npm audit --omit=dev --audit-level=high
 | --- | --- | --- |
 | `DATABASE_URL` | Yes for auth/chat | PostgreSQL connection string, including Railway's injected value |
 | `AUTH_SECRET` | Yes for auth | Long random secret for Auth.js sessions |
-| `OPENAI_API_KEY` | Yes for AI chat | Server-only OpenAI credential |
-| `OPENAI_MODEL` | Optional | Model used by the Responses API; defaults to `gpt-5.5` |
-| `OPENAI_TTS_MODEL` | Optional | TTS model for the voice coach; defaults to `gpt-4o-mini-tts` |
-| `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
-| `OPENAI_VISION_MODEL` | Optional | Vision-capable model for image analysis; falls back to `OPENAI_MODEL` |
-| `OPENAI_REALTIME_MODEL` | Optional | Low-latency Realtime model; defaults to `gpt-realtime` |
-| `OPENAI_REALTIME_VOICE` | Optional | Default voice for live Realtime sessions; the in-app selector overrides it per session |
+| `DEEPSEEK_API_KEY` | Yes for AI chat | Server-only DeepSeek credential |
+| `DEEPSEEK_BASE_URL` | Optional | DeepSeek API base URL; defaults to `https://api.deepseek.com` |
+| `DEEPSEEK_MODEL` | Optional | Text model; defaults to `deepseek-flash` |
+| `DEEPSEEK_VISION_MODEL` | Optional | Vision model; defaults to `deepseek-flash` |
+| `DEEPSEEK_WEB_MODEL` | Optional | Web-search model; defaults to `deepseek-v4-pro` |
 | `AZURE_SPEECH_KEY` | Optional | Server-only Azure Speech key for specialized pronunciation assessment |
 | `AZURE_SPEECH_REGION` | Optional | Azure Speech resource region |
 | `AI_DEFAULT_MONTHLY_BUDGET_USD` | Optional | Default per-user estimated AI budget; defaults to `5` |
-| `OPENAI_INPUT_COST_PER_MILLION_USD` | Optional | Current input-token price used for budget estimates |
-| `OPENAI_OUTPUT_COST_PER_MILLION_USD` | Optional | Current output-token price used for budget estimates |
-| `OPENAI_TTS_COST_PER_MILLION_CHAR_USD` | Optional | TTS character price used for optional voice-cost estimates |
-| `OPENAI_REALTIME_COST_PER_MINUTE_USD` | Optional | Realtime voice minute price used for optional voice-cost estimates |
+| `DEEPSEEK_INPUT_COST_PER_MILLION_USD` | Optional | Current DeepSeek input-token price used for budget estimates |
+| `DEEPSEEK_OUTPUT_COST_PER_MILLION_USD` | Optional | Current DeepSeek output-token price used for budget estimates |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
-| `HEALTHCHECK_STRICT` | Optional | Set to `true` to require PostgreSQL and OpenAI for a healthy deployment response; production mode is strict automatically |
+| `HEALTHCHECK_STRICT` | Optional | Set to `true` to require PostgreSQL and DeepSeek for a healthy deployment response; production mode is strict automatically |
 | `CRON_SECRET` | Required for retention cleanup | Secret for the scheduled privacy-maintenance request |
 | `RETENTION_APP_URL` | Required for the retention service | Public URL of the web service used by the Railway cron job |
 | `DATA_RETENTION_DAYS` | Optional | Retention window for AI usage and tool-execution logs; defaults to `365` and is clamped to 30–3650 days |
@@ -72,7 +69,7 @@ npm audit --omit=dev --audit-level=high
 ## Railway deployment checklist
 
 1. Create a private Railway project with a PostgreSQL service and connect the repository to a web service.
-2. Add the required variables to the web service: `DATABASE_URL` (normally injected by Railway), `AUTH_SECRET`, and `OPENAI_API_KEY`. Add the optional voice, pronunciation, pricing, and public URL variables only when their providers are configured.
+2. Add the required variables to the web service: `DATABASE_URL` (normally injected by Railway), `AUTH_SECRET`, and `DEEPSEEK_API_KEY`. Add the optional pronunciation, pricing, and public URL variables only when their providers are configured.
 3. Use the committed `railway.toml`; its build command generates Prisma and Next.js, while its start command runs `prisma migrate deploy` before `next start`.
 4. Set `HEALTHCHECK_STRICT=true` and confirm `/api/health` reports `ready` before sharing the URL. A `degraded` response is expected only for local development without services.
 5. Add a second Railway service using `railway.retention.toml`, set the same `CRON_SECRET` on both services, and set `RETENTION_APP_URL` to the web service URL.
@@ -82,7 +79,7 @@ npm audit --omit=dev --audit-level=high
 
 - Responsive light/dark application shell with sidebar navigation.
 - Overview dashboard with daily goal, streak, study time, level, and skill snapshot.
-- Agent Assistant, English Tutor, and Smart Learning modes. Agent Assistant understands safe natural-language commands such as “show my progress”, “open my learning path”, “start tutor practice”, and “open settings” in typed chat, browser dictation, and live Realtime voice.
+- Agent Assistant, English Tutor, and Smart Learning modes. Agent Assistant understands safe natural-language commands such as “show my progress”, “open my learning path”, “start tutor practice”, and “open settings” in typed chat and browser dictation.
 - Agent Assistant image analysis for JPG, PNG, WEBP, and GIF files up to 3 MB. Images are sent only for the current response and are not stored in conversation history; the assistant can describe visible content, read English text, explain exercises, and extract contextual vocabulary.
 - Supportive correction instructions, including corrected sentence, natural alternative, and concise Spanish explanation when relevant.
 - Active learning focus on irregular verbs and contextual vocabulary across travel, daily life, work/technology, and international conversations.
@@ -90,13 +87,11 @@ npm audit --omit=dev --audit-level=high
 - Persistent login-attempt limiting by normalized email, alongside registration and AI endpoint rate limits.
 - JWT sessions revalidate account existence so deleted accounts lose access without waiting for token expiry.
 - Conversation and message persistence with ownership checks.
-- Streaming assistant responses using the server-side OpenAI Responses API.
+- Streaming assistant responses using the server-side DeepSeek Responses API, including image analysis with `deepseek-flash`.
 - Optional web research toggle; search is off by default, requires an explicit user action, and writes a scoped tool-execution audit record.
 - Per-user web-research permission in Settings, enforced server-side before any search is approved or executed.
 - Text-note assistance for `.txt`, `.md`, `.csv`, and `.json` attachments, inserted locally into the next user prompt with a 1 MB limit and untrusted-content delimiters; files are not uploaded by the browser.
-- Voice practice: browser speech recognition, streamed tutor replies, server-side AI speech when configured, and browser speech fallback.
-- Low-latency live voice via WebRTC and an ephemeral server-issued Realtime session key when OpenAI Realtime is configured, with input transcription shown in the review panel; the prior turn-based voice flow remains available as fallback.
-- Realtime voice transcripts are persisted as user-scoped conversation messages in arrival order, so live sessions are available in conversation history and privacy exports.
+- Voice practice: browser speech recognition, streamed DeepSeek tutor replies, and browser speech synthesis. This avoids OpenAI or other server-side audio charges; voice quality depends on the voices installed on the device.
 - Specialized pronunciation assessment adapter using Azure Speech when both Azure variables are configured; without them the UI reports that no score is available.
 - An interactive irregular-verb deck with travel, daily life, work, technology, and international context filters.
 - The recall deck also includes contextual phrases and environment vocabulary such as boarding passes, deadlines, backups, small talk, and follow-ups.
@@ -120,7 +115,7 @@ npm audit --omit=dev --audit-level=high
 - User-approved memories can be created, edited, and deleted from Settings.
 - Installable PWA manifest with PNG icons for desktop/Android, a 180px Apple touch icon, iOS metadata, service-worker registration, public-asset caching, and offline shell fallback without caching authenticated HTML.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
-- TTS and Realtime voice sessions are included in per-user AI usage history; both voice paths respect the monthly budget when their optional pricing variables are configured.
+- DeepSeek token usage is included in per-user AI usage history, with a server-side budget gate when current DeepSeek token pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, voice turns, and completed Tutor/Smart text turns so progress reflects completed activity.
 - Study-session writes accept only known activity types and cap each client-reported record at 60 minutes to protect progress integrity.
 - Study-session metadata is also limited to short, bounded JSON records to prevent oversized client-supplied progress payloads.

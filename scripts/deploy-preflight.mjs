@@ -9,7 +9,7 @@ if (existsSync(localEnvPath)) {
     if (match && !process.env[match[1]]) process.env[match[1]] = match[2].replace(/^"|"$/g, "");
   }
 }
-const required = ["DATABASE_URL", "AUTH_SECRET", "OPENAI_API_KEY"];
+const required = ["DATABASE_URL", "AUTH_SECRET", "DEEPSEEK_API_KEY"];
 const missing = required.filter((name) => !process.env[name]);
 const migrationRoot = join(process.cwd(), "prisma", "migrations");
 const migrations = existsSync(migrationRoot) ? readdirSync(migrationRoot).filter((entry) => /^\d+_.+/.test(entry)) : [];

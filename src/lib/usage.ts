@@ -13,25 +13,15 @@ export function monthlyBudgetDefault() {
 }
 
 export function estimateCostUsd(inputTokens: number, outputTokens: number) {
-  const inputRate = Number(process.env.OPENAI_INPUT_COST_PER_MILLION_USD || "0");
-  const outputRate = Number(process.env.OPENAI_OUTPUT_COST_PER_MILLION_USD || "0");
+  const inputRate = Number(process.env.DEEPSEEK_INPUT_COST_PER_MILLION_USD || "0");
+  const outputRate = Number(process.env.DEEPSEEK_OUTPUT_COST_PER_MILLION_USD || "0");
   const safeInputRate = Number.isFinite(inputRate) && inputRate >= 0 ? inputRate : 0;
   const safeOutputRate = Number.isFinite(outputRate) && outputRate >= 0 ? outputRate : 0;
   return (inputTokens / 1_000_000) * safeInputRate + (outputTokens / 1_000_000) * safeOutputRate;
 }
 
 export function pricingConfigured() {
-  return Boolean(process.env.OPENAI_INPUT_COST_PER_MILLION_USD && process.env.OPENAI_OUTPUT_COST_PER_MILLION_USD);
-}
-
-export function estimateTtsCostUsd(characters: number) {
-  const rate = Number(process.env.OPENAI_TTS_COST_PER_MILLION_CHAR_USD || "0");
-  return Number.isFinite(rate) && rate >= 0 ? (characters / 1_000_000) * rate : 0;
-}
-
-export function estimateRealtimeCostUsd(seconds: number) {
-  const rate = Number(process.env.OPENAI_REALTIME_COST_PER_MINUTE_USD || "0");
-  return Number.isFinite(rate) && rate >= 0 ? (seconds / 60) * rate : 0;
+  return Boolean(process.env.DEEPSEEK_INPUT_COST_PER_MILLION_USD && process.env.DEEPSEEK_OUTPUT_COST_PER_MILLION_USD);
 }
 
 export async function recordAiUsageEvent(input: { userId: string; provider: string; model: string; kind: string; estimatedCostUsd?: number; metadata?: Prisma.InputJsonValue }) {

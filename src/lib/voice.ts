@@ -1,19 +1,12 @@
 export const voiceOptions = [
-  { value: "coral", label: "Coral", description: "Warm and expressive" },
-  { value: "marin", label: "Marin", description: "Natural and clear" },
-  { value: "cedar", label: "Cedar", description: "Steady and polished" },
-  { value: "alloy", label: "Alloy", description: "Balanced and neutral" },
-  { value: "ash", label: "Ash", description: "Focused and direct" },
-  { value: "ballad", label: "Ballad", description: "Smooth and measured" },
-  { value: "echo", label: "Echo", description: "Crisp and confident" },
-  { value: "sage", label: "Sage", description: "Calm and thoughtful" },
-  { value: "shimmer", label: "Shimmer", description: "Bright and friendly" },
-  { value: "verse", label: "Verse", description: "Conversational and lively" },
+  { value: "natural", label: "Natural", description: "Warm conversational rhythm", style: { rate: 0.92, pitch: 0.98 } },
+  { value: "clear", label: "Clear", description: "Steady pronunciation practice", style: { rate: 0.86, pitch: 1 } },
+  { value: "slow", label: "Slow", description: "Extra time to follow along", style: { rate: 0.74, pitch: 0.98 } },
 ] as const;
 
 export type VoiceName = typeof voiceOptions[number]["value"];
 
-export const defaultVoice: VoiceName = "coral";
+export const defaultVoice: VoiceName = "natural";
 
 export function isVoiceName(value: unknown): value is VoiceName {
   return typeof value === "string" && voiceOptions.some((voice) => voice.value === value);
