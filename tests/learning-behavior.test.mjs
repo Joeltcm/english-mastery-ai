@@ -46,6 +46,9 @@ test("agent commands understand natural Spanish and English requests", async () 
   assert.deepEqual(parseAgentCommand("quiero practicar con el tutor"), { type: "set-mode", mode: "TUTOR" });
   assert.deepEqual(parseAgentCommand("switch to smart learning"), { type: "set-mode", mode: "SMART" });
   assert.deepEqual(parseAgentCommand("abre configuración"), { type: "navigate", view: "settings" });
+  assert.deepEqual(parseAgentCommand("start voice practice"), { type: "open-voice" });
+  assert.deepEqual(parseAgentCommand("repasa verbos irregulares conmigo"), { type: "start-practice", mode: "TUTOR", prompt: "Let’s practice irregular verbs and contextual vocabulary in a natural conversation." });
+  assert.deepEqual(parseAgentCommand("turn on dark mode"), { type: "toggle-theme" });
   assert.equal(parseAgentCommand("What is the difference between went and gone?"), null);
 });
 

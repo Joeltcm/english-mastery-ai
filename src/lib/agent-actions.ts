@@ -2,7 +2,10 @@ export type AgentView = "overview" | "chat" | "learn" | "progress" | "settings";
 
 export type AgentAction =
   | { type: "navigate"; view: AgentView }
-  | { type: "set-mode"; mode: "TUTOR" | "SMART" };
+  | { type: "set-mode"; mode: "TUTOR" | "SMART" }
+  | { type: "open-voice" }
+  | { type: "start-practice"; mode: "TUTOR" | "SMART"; prompt: string }
+  | { type: "toggle-theme" };
 
 function normalizeCommand(input: string) {
   return input
@@ -35,6 +38,21 @@ export function parseAgentCommand(input: string): AgentAction | null {
   ])) return { type: "set-mode", mode: "SMART" };
 
   if (matches(command, [
+    /\b(abre|abrir|inicia|iniciar|start|open|quiero)\b.*\b(voz|voice|microfono|microphone|hablar en vivo|live audio)\b/,
+    /\b(practicar|practice|conversar|talk)\s+(por|in|with)\s+(voz|voice)\b/,
+  ])) return { type: "open-voice" };
+
+  if (matches(command, [
+    /\b(practica|practicar|repasa|repasar|practice|review|drill)\b.*\b(verbos irregulares|irregular verbs|vocabulario|vocabulary|travel|viaje|work|trabajo|technology|tecnologia)\b/,
+    /\b(start|begin|inicia|iniciar|preparame|preparar)\b.*\b(practica|practice|sesion|session)\b/,
+  ])) return { type: "start-practice", mode: "TUTOR", prompt: "Let’s practice irregular verbs and contextual vocabulary in a natural conversation." };
+
+  if (matches(command, [
+    /\b(activa|activar|enciende|encender|turn on|enable)\b.*\b(modo oscuro|dark mode|tema oscuro|dark theme)\b/,
+    /\b(deshactiva|desactivar|apaga|apagar|turn off|disable)\b.*\b(modo oscuro|dark mode|tema oscuro|dark theme)\b/,
+  ])) return { type: "toggle-theme" };
+
+  if (matches(command, [
     /\b(muestrame|ensename|abre|ir a|llevame|go to|take me to|open|show me)\b.*\b(progreso|avance|progress|stats|estadisticas|performance|como voy|how am i doing)\b/,
     /\b(como voy|dime como voy|how am i doing|tell me how (?:am i|i(?:'m| am)) doing|how is my progress)\b/,
     /\b(quiero|i want to)\s+(ver|revisar|see|check)\s+(mi|my)?\s*(progreso|avance|progress|stats)\b/,
@@ -65,6 +83,9 @@ export function parseAgentCommand(input: string): AgentAction | null {
 
 export function describeAgentAction(action: AgentAction) {
   if (action.type === "set-mode") return action.mode === "TUTOR" ? "Let’s practice with your English Tutor." : "Let’s continue with Smart Learning.";
+  if (action.type === "open-voice") return "Opening live voice practice.";
+  if (action.type === "start-practice") return "I’m preparing a focused practice session for you.";
+  if (action.type === "toggle-theme") return "I’m updating your appearance preference.";
   const copy: Record<AgentView, string> = {
     overview: "Opening your overview.",
     chat: "Opening your conversation space.",
