@@ -84,6 +84,7 @@ npm run build
 - Railway build/deploy settings and health check.
 - Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
 - Adaptive lesson catalog persisted in PostgreSQL, ordered from the learner’s weaker skill and tracked through lesson attempts; it covers grammar, vocabulary, irregular verbs, listening, reading, writing, and speaking.
+- Lesson cards expose separate Tutor launch and explicit “Mark practiced” actions, so completion is never inferred from merely opening a lesson.
 - Periodic check-ins become due after seven recorded study sessions following the latest assessment.
 - Travel role-play launcher for airport, hotel, and international work situations, connected to Tutor mode.
 - Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
