@@ -15,6 +15,7 @@ import { AdaptiveLessonGrid } from "@/components/adaptive-lesson-grid";
 import { ToolPermissions } from "@/components/tool-permissions";
 import { CorrectionReview } from "@/components/correction-review";
 import { extractCorrection } from "@/lib/corrections";
+import { describeAgentAction, parseAgentCommand, type AgentAction } from "@/lib/agent-actions";
 
 type Mode = "ASSISTANT" | "TUTOR" | "SMART";
 type View = "overview" | "chat" | "learn" | "progress" | "settings";
@@ -23,7 +24,7 @@ type ConversationSummary = { id: string; title: string; mode: Mode; updatedAt: s
 type Profile = { proficiencyLevel: string; dailyGoalMinutes: number; currentStreak: number; totalStudyMinutes: number; grammarScore: number; vocabularyScore: number; monthlyBudgetUsd: number };
 
 const modeInfo: Record<Mode, { label: string; eyebrow: string; description: string; color: string }> = {
-  ASSISTANT: { label: "Assistant", eyebrow: "GENERAL SUPPORT", description: "Technology, business, travel, research, and everyday questions.", color: "violet" },
+  ASSISTANT: { label: "Agent Assistant", eyebrow: "NATURAL COMMANDS", description: "Ask naturally, get general help, and move around your learning space.", color: "violet" },
   TUTOR: { label: "English Tutor", eyebrow: "PRACTICE MODE", description: "Get corrections, explanations in Spanish, and a confidence boost.", color: "sky" },
   SMART: { label: "Smart Learning", eyebrow: "ADAPTIVE MODE", description: "Solve the task while turning your conversation into progress.", color: "emerald" },
 };
@@ -121,6 +122,11 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
 
   function goTo(view: View) { setActiveView(view); setMobileOpen(false); if (view === "chat") window.setTimeout(() => document.getElementById("chat-composer")?.focus(), 50); }
   function startPractice(prompt?: string) { if (prompt) { setMode("TUTOR"); setDraft(prompt); } goTo("chat"); }
+  function handleAgentAction(action: AgentAction) {
+    setVoiceOpen(false);
+    if (action.type === "set-mode") setMode(action.mode);
+    goTo(action.type === "set-mode" ? "chat" : action.view);
+  }
 
   async function submitAuth(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setAuthError(""); setAuthBusy(true);
@@ -172,6 +178,13 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     setWebResearch(false);
     const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", content: message }; const assistantMessage: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
     setMessages((current) => [...current, userMessage, assistantMessage]); setDraft(""); setIsSending(true);
+    const agentAction = mode === "ASSISTANT" ? parseAgentCommand(message) : null;
+    if (agentAction) {
+      setMessages((current) => current.map((item) => item.id === assistantMessage.id ? { ...item, content: describeAgentAction(agentAction) } : item));
+      setIsSending(false);
+      handleAgentAction(agentAction);
+      return;
+    }
     let assistantText = "";
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -213,7 +226,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     {mobileOpen && <button className="sidebar-overlay" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}
     <main className="main-content"><header className="topbar"><button className="icon-button menu-button" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button><div className="breadcrumbs"><span>Workspace</span><ChevronRight size={14} /><strong>{navItems.find((item) => item.id === activeView)?.label}</strong></div><div className="topbar-actions"><button className="icon-button" onClick={() => setDarkMode((current) => !current)} aria-label="Toggle theme">{darkMode ? <SunMedium size={18} /> : <Moon size={18} />}</button>{user ? <button className="profile-chip" onClick={() => goTo("settings")}><span className="avatar small">{displayName.slice(0, 1).toUpperCase()}</span><span>{displayName}</span></button> : <button className="top-signin" onClick={() => setAuthOpen(true)}>Sign in</button>}</div></header><div className="page-content">{renderMain()}</div></main>
     {authOpen && !session?.user && <AuthDialog mode={authMode} setMode={setAuthMode} onClose={() => setAuthOpen(false)} onSubmit={submitAuth} busy={authBusy} error={authError} email={email} setEmail={setEmail} password={password} setPassword={setPassword} name={name} setName={setName} />}
-    {voiceOpen && <VoicePractice mode={mode} user={user} onClose={() => setVoiceOpen(false)} onSignIn={() => { setVoiceOpen(false); setAuthOpen(true); }} />}
+    {voiceOpen && <VoicePractice mode={mode} user={user} onAgentAction={handleAgentAction} onClose={() => setVoiceOpen(false)} onSignIn={() => { setVoiceOpen(false); setAuthOpen(true); }} />}
   </div>;
 }
 

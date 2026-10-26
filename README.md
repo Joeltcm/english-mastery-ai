@@ -80,7 +80,7 @@ npm audit --omit=dev --audit-level=high
 
 - Responsive light/dark application shell with sidebar navigation.
 - Overview dashboard with daily goal, streak, study time, level, and skill snapshot.
-- Assistant, English Tutor, and Smart Learning modes.
+- Agent Assistant, English Tutor, and Smart Learning modes. Agent Assistant understands safe natural-language commands such as “show my progress”, “open my learning path”, “start tutor practice”, and “open settings” in typed chat, browser dictation, and live Realtime voice.
 - Supportive correction instructions, including corrected sentence, natural alternative, and concise Spanish explanation when relevant.
 - Active learning focus on irregular verbs and contextual vocabulary across travel, daily life, work/technology, and international conversations.
 - Auth.js credentials sign-in and registration with user-scoped data access.

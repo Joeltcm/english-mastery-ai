@@ -1,7 +1,7 @@
 import type { LearningMode } from "@prisma/client";
 
 export const modeCopy: Record<LearningMode, { label: string; description: string; accent: string }> = {
-  ASSISTANT: { label: "Assistant", description: "General help for work, travel, technology, and research.", accent: "violet" },
+  ASSISTANT: { label: "Agent Assistant", description: "Natural help and safe commands for your learning space.", accent: "violet" },
   TUTOR: { label: "English Tutor", description: "Practice English with supportive corrections and short explanations in Spanish.", accent: "sky" },
   SMART: { label: "Smart Learning", description: "Get an answer while the coach adapts your next learning step.", accent: "emerald" },
 };

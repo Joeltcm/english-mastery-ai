@@ -39,6 +39,16 @@ test("learning prompts preserve the original request and active focus", async ()
   assert.match(assistantPrompt, /Explicación \(ES\)/);
 });
 
+test("agent commands understand natural Spanish and English requests", async () => {
+  const { parseAgentCommand } = await loadTypeScriptModule("src/lib/agent-actions.ts");
+  assert.deepEqual(parseAgentCommand("muéstrame mi progreso"), { type: "navigate", view: "progress" });
+  assert.deepEqual(parseAgentCommand("open the learning path"), { type: "navigate", view: "learn" });
+  assert.deepEqual(parseAgentCommand("quiero practicar con el tutor"), { type: "set-mode", mode: "TUTOR" });
+  assert.deepEqual(parseAgentCommand("switch to smart learning"), { type: "set-mode", mode: "SMART" });
+  assert.deepEqual(parseAgentCommand("abre configuración"), { type: "navigate", view: "settings" });
+  assert.equal(parseAgentCommand("What is the difference between went and gone?"), null);
+});
+
 test("adaptive lesson ordering prioritizes pending lessons in the weaker focus", async () => {
   const { orderLessons } = await loadTypeScriptModule("src/lib/lesson-order.ts");
   const lessons = [
