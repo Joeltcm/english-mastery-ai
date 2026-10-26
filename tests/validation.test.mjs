@@ -76,6 +76,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /AbortSignal\.timeout/);
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /recordStudySession/);
   assert.match(readFileSync(join(root, "src/app/api/health/route.ts"), "utf8"), /HEALTHCHECK_STRICT/);
+  assert.match(readFileSync(join(root, "src/app/api/health/route.ts"), "utf8"), /authConfigured/);
   assert.match(readFileSync(join(root, "src/lib/learning.ts"), "utf8"), /Explicación \(ES\)/);
   assert.match(readFileSync(join(root, "src/auth.ts"), "utf8"), /login:\$\{email\}/);
   assert.match(readFileSync(join(root, "src/auth.ts"), "utf8"), /if \(!user\) return \{\}/);

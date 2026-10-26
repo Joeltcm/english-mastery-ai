@@ -30,7 +30,7 @@ English Mastery AI is a production-oriented personal AI assistant and adaptive E
    npm run dev
    ```
 
-Open <http://localhost:3000>. The `/api/health` endpoint reports whether the database and OpenAI credentials are configured. The dashboard can render without credentials, but account creation and AI chat require the corresponding services.
+Open <http://localhost:3000>. The `/api/health` endpoint reports whether the database, Auth.js secret, and OpenAI credentials are configured. The dashboard can render without credentials, but account creation and AI chat require the corresponding services.
 
 ## Commands
 
