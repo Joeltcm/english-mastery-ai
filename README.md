@@ -97,6 +97,7 @@ npm run deploy:preflight
 - Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
 - Correction history is captured only when the tutor emits an explicit correction block and is surfaced in the grammar progress view.
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
+- Privacy export includes conversations, learning data, tool audit records, and per-user AI usage events without secrets.
 - User-approved memories can be created, edited, and deleted from Settings.
 - Installable PWA manifest with scope, adaptive icon declarations, iOS metadata, service-worker registration, and offline shell fallback.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
