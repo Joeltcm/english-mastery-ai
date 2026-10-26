@@ -40,6 +40,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "public/sw.js"), "utf8"), /offline\.html/);
   assert.match(readFileSync(join(root, "public/sw.js"), "utf8"), /_next\/static/);
   assert.match(readFileSync(join(root, "public/sw.js"), "utf8"), /event\.request\.mode === "navigate"/);
+  assert.match(readFileSync(join(root, "public/sw.js"), "utf8"), /Response\.error\(\)/);
   assert.equal(existsSync(join(root, "public/offline.html")), true);
   for (const icon of ["public/icon-192.png", "public/icon-512.png", "public/apple-touch-icon.png"]) assert.equal(existsSync(join(root, icon)), true, icon);
   assert.match(readFileSync(join(root, "src/app/layout.tsx"), "utf8"), /appleWebApp/);

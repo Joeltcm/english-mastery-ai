@@ -23,5 +23,5 @@ self.addEventListener("fetch", (event) => {
       void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
     }
     return response;
-  }).catch(() => caches.match(event.request).then((cached) => cached || caches.match(isNavigation ? "/offline.html" : "/"))));
+  }).catch(() => caches.match(event.request).then((cached) => cached || (isNavigation ? caches.match("/offline.html") : Response.error()))));
 });
