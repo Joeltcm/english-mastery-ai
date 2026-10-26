@@ -9,7 +9,7 @@ import { recordStudySession } from "@/lib/study";
 const studySessionSchema = z.object({
   activity: z.enum(["initial-assessment", "adaptive-lesson", "vocabulary-review", "voice-conversation", "realtime-voice", "text-conversation"]),
   minutes: z.number().int().min(1).max(60),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: z.record(z.string().trim().min(1).max(40), z.unknown()).optional().refine((value) => !value || JSON.stringify(value).length <= 2_000),
   timezone: z.string().trim().max(100).optional(),
 });
 

@@ -83,6 +83,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /provider could not generate audio/);
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /consumePersistentRateLimit/);
   assert.equal(readFileSync(join(root, "src/app/api/study-sessions/route.ts"), "utf8").includes("consumePersistentRateLimit"), true);
+  assert.match(readFileSync(join(root, "src/app/api/study-sessions/route.ts"), "utf8"), /2_000/);
   assert.equal(readFileSync(join(root, "src/app/api/vocabulary/review/route.ts"), "utf8").includes("consumePersistentRateLimit"), true);
   assert.match(readFileSync(join(root, "src/app/api/study-sessions/route.ts"), "utf8"), /realtime-voice/);
   assert.match(readFileSync(join(root, "src/app/api/study-sessions/route.ts"), "utf8"), /max\(60\)/);
