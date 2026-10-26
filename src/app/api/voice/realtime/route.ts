@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { auth } from "@/auth";
 import { buildSystemPrompt } from "@/lib/learning";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
+import { modeSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -10,8 +12,9 @@ export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "Add OPENAI_API_KEY to enable live voice practice." }, { status: 503 });
   const rate = await consumePersistentRateLimit(`voice-realtime:${session.user.id}`, 10, 3_600_000);
   if (!rate.allowed) return NextResponse.json({ error: `Too many live voice sessions. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
-  const body = await request.json().catch(() => null) as { mode?: "ASSISTANT" | "TUTOR" | "SMART" } | null;
-  const mode = body?.mode || "TUTOR";
+  const body = await request.json().catch(() => null);
+  const parsed = z.object({ mode: modeSchema.optional() }).safeParse(body);
+  const mode = parsed.success ? parsed.data.mode || "TUTOR" : "TUTOR";
   const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },

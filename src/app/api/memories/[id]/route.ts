@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "PostgreSQL is not configured." }, { status: 503 });
+  const rate = consumeRateLimit(`memory:${session.user.id}`, 30);
+  if (!rate.allowed) return NextResponse.json({ error: `Too many memory changes. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const { id } = await context.params;
   const body = await request.json().catch(() => null) as { approved?: unknown; value?: unknown } | null;
   const update: { approved?: boolean; value?: string } = {};
@@ -22,6 +25,8 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "PostgreSQL is not configured." }, { status: 503 });
+  const rate = consumeRateLimit(`memory:${session.user.id}`, 30);
+  if (!rate.allowed) return NextResponse.json({ error: `Too many memory changes. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const { id } = await context.params;
   const memory = await db.agentMemory.deleteMany({ where: { id, userId: session.user.id } });
   if (!memory.count) return NextResponse.json({ error: "Memory not found." }, { status: 404 });
