@@ -65,6 +65,15 @@ npm run deploy:preflight
 | `RETENTION_APP_URL` | Required for the retention service | Public URL of the web service used by the Railway cron job |
 | `DATA_RETENTION_DAYS` | Optional | Retention window for AI usage and tool-execution logs; defaults to `365` and is clamped to 30–3650 days |
 
+## Railway deployment checklist
+
+1. Create a private Railway project with a PostgreSQL service and connect the repository to a web service.
+2. Add the required variables to the web service: `DATABASE_URL` (normally injected by Railway), `AUTH_SECRET`, and `OPENAI_API_KEY`. Add the optional voice, pronunciation, pricing, and public URL variables only when their providers are configured.
+3. Use the committed `railway.toml`; its build command generates Prisma and Next.js, while its start command runs `prisma migrate deploy` before `next start`.
+4. Set `HEALTHCHECK_STRICT=true` and confirm `/api/health` reports `ready` before sharing the URL. A `degraded` response is expected only for local development without services.
+5. Add a second Railway service using `railway.retention.toml`, set the same `CRON_SECRET` on both services, and set `RETENTION_APP_URL` to the web service URL.
+6. Run `npm run deploy:preflight` with the production environment loaded. A non-zero result is a deployment stop signal; it does not claim that deployment succeeded.
+
 ## Implemented
 
 - Responsive light/dark application shell with sidebar navigation.
