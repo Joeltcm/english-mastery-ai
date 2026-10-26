@@ -49,6 +49,13 @@ test("adaptive lesson ordering prioritizes pending lessons in the weaker focus",
   assert.deepEqual(orderLessons(lessons, "vocabulary").map((lesson) => lesson.slug), ["pending-vocabulary", "pending-mixed", "done-grammar"]);
 });
 
+test("vocabulary deck covers every requested environment", async () => {
+  const { focusVocabulary } = await loadTypeScriptModule("src/lib/vocabulary.ts");
+  const contexts = new Set(focusVocabulary.map((item) => item.context));
+  for (const context of ["Travel", "Daily life", "Work", "Technology", "International", "Conversation"]) assert.equal(contexts.has(context), true, context);
+  assert.equal(focusVocabulary.length >= 20, true);
+});
+
 test("progress date helpers respect the learner time zone", async () => {
   const { localDateKey, startOfLocalDay } = await loadTypeScriptModule("src/lib/time.ts");
   const latePanamaNight = new Date("2026-10-26T04:00:00.000Z");

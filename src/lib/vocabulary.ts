@@ -7,6 +7,21 @@ export const focusVocabulary = [
   { term: "give", translation: "dar", example: "They gave us directions and have given helpful advice before.", pronunciation: "/ɡɪv/", context: "International" },
   { term: "know", translation: "saber / conocer", example: "I knew the answer and have known this team for a long time.", pronunciation: "/noʊ/", context: "Conversation" },
   { term: "find", translation: "encontrar", example: "She found a quiet hotel and has found a better routine.", pronunciation: "/faɪnd/", context: "Travel" },
+  { term: "boarding pass", translation: "tarjeta de embarque", example: "Please keep your boarding pass ready at the gate.", pronunciation: "/ˈbɔːrdɪŋ pæs/", context: "Travel" },
+  { term: "itinerary", translation: "itinerario", example: "I shared the itinerary so everyone knows the schedule.", pronunciation: "/aɪˈtɪnəreri/", context: "Travel" },
+  { term: "check in", translation: "registrarse / hacer check-in", example: "We need to check in before the hotel desk closes.", pronunciation: "/tʃek ɪn/", context: "Travel" },
+  { term: "commute", translation: "trayecto diario", example: "My commute is shorter when I work from home.", pronunciation: "/kəˈmjuːt/", context: "Daily life" },
+  { term: "run errands", translation: "hacer diligencias", example: "I have to run errands before I meet my friend.", pronunciation: "/rʌn ˈerəndz/", context: "Daily life" },
+  { term: "deadline", translation: "fecha límite", example: "We need to finish the report before the deadline.", pronunciation: "/ˈdedlaɪn/", context: "Work" },
+  { term: "follow up", translation: "dar seguimiento", example: "I will follow up with the client after the meeting.", pronunciation: "/ˈfɑːloʊ ʌp/", context: "Work" },
+  { term: "agenda", translation: "orden del día / agenda", example: "The first item on the agenda is the launch plan.", pronunciation: "/əˈdʒendə/", context: "Work" },
+  { term: "roll out", translation: "implementar / lanzar gradualmente", example: "The team will roll out the update to more users next week.", pronunciation: "/roʊl aʊt/", context: "Technology" },
+  { term: "bug", translation: "error de software", example: "We found a bug and fixed it before the release.", pronunciation: "/bʌɡ/", context: "Technology" },
+  { term: "backup", translation: "copia de seguridad", example: "Always make a backup before changing the system.", pronunciation: "/ˈbækʌp/", context: "Technology" },
+  { term: "clarify", translation: "aclarar", example: "Could you clarify the next step for the international team?", pronunciation: "/ˈklærəfaɪ/", context: "International" },
+  { term: "take turns", translation: "turnarse", example: "Let’s take turns so everyone has time to speak.", pronunciation: "/teɪk tɜːrnz/", context: "International" },
+  { term: "small talk", translation: "charla informal", example: "A little small talk can make a new meeting feel more comfortable.", pronunciation: "/smɔːl tɔːk/", context: "Conversation" },
+  { term: "keep in touch", translation: "mantenerse en contacto", example: "Let’s keep in touch after the conference.", pronunciation: "/kiːp ɪn tʌtʃ/", context: "Conversation" },
 ] as const;
 
 export type FocusVocabulary = (typeof focusVocabulary)[number];

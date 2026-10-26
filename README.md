@@ -96,6 +96,7 @@ npm audit --omit=dev --audit-level=high
 - Realtime voice transcripts are persisted as user-scoped conversation messages in arrival order, so live sessions are available in conversation history and privacy exports.
 - Specialized pronunciation assessment adapter using Azure Speech when both Azure variables are configured; without them the UI reports that no score is available.
 - An interactive irregular-verb deck with travel, daily life, work, technology, and international context filters.
+- The recall deck also includes contextual phrases and environment vocabulary such as boarding passes, deadlines, backups, small talk, and follow-ups.
 - Spaced-review ratings (`Again`, `Hard`, `Good`, `Easy`) persisted through user-scoped vocabulary APIs when PostgreSQL is connected.
 - Persistent PostgreSQL-backed rate limiting for authentication, learning updates, privacy exports, voice, and chat, with an in-memory fallback for local/offline development.
 - Catalog synchronization for lessons and vocabulary is rate-limited as well because those reads seed or update per-user records.
