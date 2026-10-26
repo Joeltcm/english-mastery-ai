@@ -15,9 +15,10 @@ export async function POST(request: Request) {
   const configuredDays = Number(process.env.DATA_RETENTION_DAYS || 365);
   const retentionDays = Number.isFinite(configuredDays) ? Math.min(3_650, Math.max(30, Math.floor(configuredDays))) : 365;
   const before = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
-  const [usage, tools] = await Promise.all([
+  const [usage, tools, buckets] = await Promise.all([
     db.aiUsageEvent.deleteMany({ where: { createdAt: { lt: before } } }),
     db.toolExecution.deleteMany({ where: { createdAt: { lt: before } } }),
+    db.rateLimitBucket.deleteMany({ where: { resetAt: { lt: new Date() } } }),
   ]);
-  return NextResponse.json({ deleted: { aiUsageEvents: usage.count, toolExecutions: tools.count }, retentionDays, before: before.toISOString() });
+  return NextResponse.json({ deleted: { aiUsageEvents: usage.count, toolExecutions: tools.count, expiredRateLimitBuckets: buckets.count }, retentionDays, before: before.toISOString() });
 }

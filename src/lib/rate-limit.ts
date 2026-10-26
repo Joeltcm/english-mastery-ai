@@ -10,6 +10,7 @@ const buckets = new Map<string, Bucket>();
 
 export function consumeRateLimit(key: string, limit = 20, windowMs = 60_000) {
   const now = Date.now();
+  if (buckets.size > 1_000) for (const [bucketKey, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(bucketKey);
   const current = buckets.get(key);
   if (!current || current.resetAt <= now) {
     buckets.set(key, { count: 1, resetAt: now + windowMs });
