@@ -114,6 +114,12 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
 
   async function handleSignOut() {
     await signOut({ redirect: false });
+    setMessages(starterMessages);
+    setConversationId(undefined);
+    setDraft("");
+    setLiveProfile(null);
+    setTodayStudyMinutes(0);
+    setActiveView("overview");
     setAuthOpen(true);
   }
 

@@ -42,6 +42,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "scripts/deploy-preflight.mjs"), "utf8"), /missingRequiredEnvironment/);
   assert.match(readFileSync(join(root, "src/app/api/assessment/route.ts"), "utf8"), /sessionsSinceAssessment/);
   assert.match(readFileSync(join(root, "src/components/privacy-controls.tsx"), "utf8"), /saveMemoryEdit/);
+  assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /setMessages\(starterMessages\)/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /provider could not start/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /text-conversation/);
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /provider could not generate audio/);
