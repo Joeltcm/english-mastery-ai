@@ -57,6 +57,7 @@ npm run build
 - Overview dashboard with daily goal, streak, study time, level, and skill snapshot.
 - Assistant, English Tutor, and Smart Learning modes.
 - Supportive correction instructions, including corrected sentence, natural alternative, and concise Spanish explanation when relevant.
+- Active learning focus on irregular verbs and contextual vocabulary across travel, daily life, work/technology, and international conversations.
 - Auth.js credentials sign-in and registration with user-scoped data access.
 - Conversation and message persistence with ownership checks.
 - Streaming assistant responses using the server-side OpenAI Responses API.
