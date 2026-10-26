@@ -7,8 +7,8 @@ import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { recordStudySession } from "@/lib/study";
 
 const studySessionSchema = z.object({
-  activity: z.string().trim().min(2).max(80),
-  minutes: z.number().int().min(1).max(180),
+  activity: z.enum(["initial-assessment", "adaptive-lesson", "vocabulary-review", "voice-conversation", "realtime-voice", "text-conversation"]),
+  minutes: z.number().int().min(1).max(60),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 

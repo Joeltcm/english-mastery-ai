@@ -114,6 +114,7 @@ npm run deploy:preflight
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
 - TTS and Realtime voice sessions are included in per-user AI usage history; both voice paths respect the monthly budget when their optional pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, voice turns, and completed Tutor/Smart text turns so progress reflects completed activity.
+- Study-session writes accept only known activity types and cap each client-reported record at 60 minutes to protect progress integrity.
 - Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.
 - Railway cron-service template in `railway.retention.toml` plus `scripts/run-retention.mjs`; configure that file as a separate Railway service with `RETENTION_APP_URL` and the same `CRON_SECRET` as the web service.
 
