@@ -6,6 +6,10 @@ import { db } from "@/lib/prisma";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Railway terminates TLS at its proxy and forwards the request internally.
+  // Explicitly trusting the forwarded host prevents Auth.js from treating the
+  // internal localhost:8080 URL as an untrusted production host.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/" },
   providers: [Credentials({
