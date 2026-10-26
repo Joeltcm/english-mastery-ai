@@ -1,0 +1,8 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm run db:generate"
+
+[deploy]
+startCommand = "npm run maintenance:retention"
+cronSchedule = "15 4 * * *"
+restartPolicyType = "NEVER"

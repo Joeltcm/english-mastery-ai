@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy"
+    "db:migrate": "prisma migrate deploy",
+    "maintenance:retention": "node scripts/run-retention.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

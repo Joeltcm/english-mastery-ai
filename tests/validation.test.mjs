@@ -31,4 +31,6 @@ test("learning and privacy surfaces are present", () => {
   assert.equal(manifest.start_url, "/");
   assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model AiUsageEvent/);
   assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model RateLimitBucket/);
+  assert.match(readFileSync(join(root, "railway.retention.toml"), "utf8"), /cronSchedule/);
+  assert.match(readFileSync(join(root, "scripts/run-retention.mjs"), "utf8"), /CRON_SECRET/);
 });

@@ -59,6 +59,7 @@ npm run build
 | `OPENAI_OUTPUT_COST_PER_MILLION_USD` | Optional | Current output-token price used for budget estimates |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 | `CRON_SECRET` | Required for retention cleanup | Secret for the scheduled privacy-maintenance request |
+| `RETENTION_APP_URL` | Required for the retention service | Public URL of the web service used by the Railway cron job |
 | `DATA_RETENTION_DAYS` | Optional | Retention window for AI usage and tool-execution logs; defaults to `365` and is clamped to 30–3650 days |
 
 ## Implemented
@@ -89,7 +90,8 @@ npm run build
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, and voice turns so progress reflects completed activity.
 - Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.
+- Railway cron-service template in `railway.retention.toml` plus `scripts/run-retention.mjs`; configure that file as a separate Railway service with `RETENTION_APP_URL` and the same `CRON_SECRET` as the web service.
 
 ## Remaining work
 
-Remaining production work is live credential/deployment verification and scheduling the retention endpoint in the hosting provider. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
+Remaining production work is live credential/deployment verification. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
