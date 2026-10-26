@@ -3,17 +3,10 @@
 import { CheckCircle2, LoaderCircle, Mic, Square, Upload, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { encodePcmWav } from "@/lib/audio";
+
 type User = { name?: string | null; email?: string | null } | null;
 type PronunciationResult = { score: number; transcript: string | null; feedback: { accuracy: number | null; fluency: number | null; completeness: number | null; prosody: number | null } };
-
-function encodeWav(audioBuffer: AudioBuffer) {
-  const channels = audioBuffer.numberOfChannels; const frameCount = audioBuffer.length; const bytesPerSample = 2; const buffer = new ArrayBuffer(44 + frameCount * channels * bytesPerSample); const view = new DataView(buffer); let offset = 0;
-  const writeString = (value: string) => { for (let index = 0; index < value.length; index += 1) view.setUint8(offset++, value.charCodeAt(index)); };
-  const writeUint32 = (value: number) => { view.setUint32(offset, value, true); offset += 4; }; const writeUint16 = (value: number) => { view.setUint16(offset, value, true); offset += 2; };
-  writeString("RIFF"); writeUint32(36 + frameCount * channels * bytesPerSample); writeString("WAVE"); writeString("fmt "); writeUint32(16); writeUint16(1); writeUint16(channels); writeUint32(audioBuffer.sampleRate); writeUint32(audioBuffer.sampleRate * channels * bytesPerSample); writeUint16(channels * bytesPerSample); writeUint16(16); writeString("data"); writeUint32(frameCount * channels * bytesPerSample);
-  for (let frame = 0; frame < frameCount; frame += 1) for (let channel = 0; channel < channels; channel += 1) { const sample = Math.max(-1, Math.min(1, audioBuffer.getChannelData(channel)[frame])); view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true); offset += 2; }
-  return new Blob([buffer], { type: "audio/wav" });
-}
 
 export function PronunciationPractice({ user, onSignIn }: { user: User; onSignIn: () => void }) {
   const [referenceText, setReferenceText] = useState("I have taken the early train to the airport.");
@@ -28,7 +21,7 @@ export function PronunciationPractice({ user, onSignIn }: { user: User; onSignIn
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const recorder = new MediaRecorder(stream); chunksRef.current = []; streamRef.current = stream; recorderRef.current = recorder;
       recorder.ondataavailable = (event) => { if (event.data.size) chunksRef.current.push(event.data); };
-      recorder.onstop = async () => { const raw = new Blob(chunksRef.current, { type: recorder.mimeType }); stream.getTracks().forEach((track) => track.stop()); try { const context = new AudioContext(); const decoded = await context.decodeAudioData(await raw.arrayBuffer()); setAudioBlob(encodeWav(decoded)); await context.close(); setStatus("Recording ready. Send it for pronunciation scoring."); } catch { setError("This recording could not be converted to WAV. Upload a WAV or OGG file instead."); } };
+      recorder.onstop = async () => { const raw = new Blob(chunksRef.current, { type: recorder.mimeType }); stream.getTracks().forEach((track) => track.stop()); try { const context = new AudioContext(); const decoded = await context.decodeAudioData(await raw.arrayBuffer()); setAudioBlob(encodePcmWav(decoded)); await context.close(); setStatus("Recording ready. Send it for pronunciation scoring."); } catch { setError("This recording could not be converted to WAV. Upload a WAV or OGG file instead."); } };
       recorder.start(); setRecording(true); setStatus("Recording… read the sentence naturally.");
     } catch { setError("Microphone access was not available. Check the browser permission or upload an audio file."); }
   }
