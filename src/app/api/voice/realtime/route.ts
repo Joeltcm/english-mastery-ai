@@ -7,6 +7,7 @@ import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { db } from "@/lib/prisma";
 import { estimateRealtimeCostUsd, monthStart, monthlyBudgetDefault, recordAiUsageEvent } from "@/lib/usage";
 import { modeSchema } from "@/lib/validation";
+import { defaultVoice, isVoiceName } from "@/lib/voice";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -15,8 +16,10 @@ export async function POST(request: Request) {
   const rate = await consumePersistentRateLimit(`voice-realtime:${session.user.id}`, 10, 3_600_000);
   if (!rate.allowed) return NextResponse.json({ error: `Too many live voice sessions. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const body = await request.json().catch(() => null);
-  const parsed = z.object({ mode: modeSchema.optional() }).safeParse(body);
+  const parsed = z.object({ mode: modeSchema.optional(), voice: z.string().optional() }).safeParse(body);
   const mode = parsed.success ? parsed.data.mode || "TUTOR" : "TUTOR";
+  const configuredVoice = process.env.OPENAI_REALTIME_VOICE;
+  const voice = parsed.success && isVoiceName(parsed.data.voice) ? parsed.data.voice : isVoiceName(configuredVoice) ? configuredVoice : defaultVoice;
   const minimumSessionCost = estimateRealtimeCostUsd(60);
   if (minimumSessionCost > 0 && process.env.DATABASE_URL) {
     const [profile, aggregate] = await Promise.all([
@@ -31,13 +34,13 @@ export async function POST(request: Request) {
     response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ session: { type: "realtime", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", instructions: `${buildSystemPrompt(mode)}\nThis is a live voice conversation. Never interrupt the learner. Keep replies concise enough for natural turn-taking. Correct meaningful English mistakes after the learner finishes speaking. Speak corrections naturally; never read internal labels such as “Correction:”, “Natural alternative:”, or “Explicación (ES):” aloud.`, audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "en" } } } } }),
+      body: JSON.stringify({ session: { type: "realtime", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", instructions: `${buildSystemPrompt(mode)}\nThis is a live voice conversation. Never interrupt the learner. Keep replies concise enough for natural turn-taking. Correct meaningful English mistakes after the learner finishes speaking. Speak corrections naturally; never read internal labels such as “Correction:”, “Natural alternative:”, or “Explicación (ES):” aloud.`, audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "en" } }, output: { voice } } } }),
     });
   } catch {
     return NextResponse.json({ error: "The live voice provider could not be reached. Try again shortly." }, { status: 502 });
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) return NextResponse.json({ error: data?.error?.message || "OpenAI could not start live voice practice." }, { status: 502 });
-  void recordAiUsageEvent({ userId: session.user.id, provider: "openai", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", kind: "voice_realtime_session", metadata: { mode } });
+  void recordAiUsageEvent({ userId: session.user.id, provider: "openai", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", kind: "voice_realtime_session", metadata: { mode, voice } });
   return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
 }

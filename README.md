@@ -55,6 +55,7 @@ npm audit --omit=dev --audit-level=high
 | `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
 | `OPENAI_VISION_MODEL` | Optional | Vision-capable model for image analysis; falls back to `OPENAI_MODEL` |
 | `OPENAI_REALTIME_MODEL` | Optional | Low-latency Realtime model; defaults to `gpt-realtime` |
+| `OPENAI_REALTIME_VOICE` | Optional | Default voice for live Realtime sessions; the in-app selector overrides it per session |
 | `AZURE_SPEECH_KEY` | Optional | Server-only Azure Speech key for specialized pronunciation assessment |
 | `AZURE_SPEECH_REGION` | Optional | Azure Speech resource region |
 | `AI_DEFAULT_MONTHLY_BUDGET_USD` | Optional | Default per-user estimated AI budget; defaults to `5` |

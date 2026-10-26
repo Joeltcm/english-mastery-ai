@@ -6,8 +6,9 @@ import { db } from "@/lib/prisma";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { estimateRealtimeCostUsd, monthStart, monthlyBudgetDefault, recordAiUsageEvent } from "@/lib/usage";
 import { modeSchema } from "@/lib/validation";
+import { isVoiceName } from "@/lib/voice";
 
-const usageSchema = z.object({ durationSeconds: z.number().int().min(1).max(7_200), mode: modeSchema.optional() });
+const usageSchema = z.object({ durationSeconds: z.number().int().min(1).max(7_200), mode: modeSchema.optional(), voice: z.string().optional() });
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -26,6 +27,6 @@ export async function POST(request: Request) {
     const budget = profile?.monthlyBudgetUsd ?? monthlyBudgetDefault();
     if (budget > 0 && (aggregate._sum.estimatedCostUsd || 0) + estimatedCost >= budget) return NextResponse.json({ error: "This live voice session would exceed your monthly AI budget." }, { status: 429 });
   }
-  await recordAiUsageEvent({ userId: session.user.id, provider: "openai", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", kind: "voice_realtime_duration", estimatedCostUsd: estimatedCost, metadata: { durationSeconds: parsed.data.durationSeconds, mode: parsed.data.mode || "TUTOR" } });
+  await recordAiUsageEvent({ userId: session.user.id, provider: "openai", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", kind: "voice_realtime_duration", estimatedCostUsd: estimatedCost, metadata: { durationSeconds: parsed.data.durationSeconds, mode: parsed.data.mode || "TUTOR", ...(isVoiceName(parsed.data.voice) ? { voice: parsed.data.voice } : {}) } });
   return NextResponse.json({ recorded: true, estimatedCostUsd: estimatedCost });
 }

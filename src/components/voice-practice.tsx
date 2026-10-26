@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { describeAgentAction, parseAgentCommand, type AgentAction } from "@/lib/agent-actions";
 import { extractCorrection, removeCorrectionLabels } from "@/lib/corrections";
+import { defaultVoice, isVoiceName, voiceOptions, type VoiceName } from "@/lib/voice";
 
 type Mode = "ASSISTANT" | "TUTOR" | "SMART";
 type User = { name?: string | null; email?: string | null } | null;
@@ -32,6 +33,15 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
     return Boolean(browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition);
   });
   const [audioSource, setAudioSource] = useState<"ai" | "browser">("browser");
+  const [voice, setVoice] = useState<VoiceName>(() => {
+    if (typeof window === "undefined") return defaultVoice;
+    try {
+      const savedVoice = window.localStorage.getItem("english-mastery.voice");
+      return isVoiceName(savedVoice) ? savedVoice : defaultVoice;
+    } catch {
+      return defaultVoice;
+    }
+  });
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus>("idle");
   const [realtimeTranscript, setRealtimeTranscript] = useState("");
   const recognitionRef = useRef<Recognition | null>(null);
@@ -51,7 +61,7 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
     const startedAt = realtimeStartedAtRef.current;
     if (user && startedAt) {
       const durationSeconds = Math.max(1, Math.min(7_200, Math.ceil((Date.now() - startedAt) / 1_000)));
-      void fetch("/api/voice/realtime/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ durationSeconds, mode }) }).catch(() => undefined);
+      void fetch("/api/voice/realtime/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ durationSeconds, mode, voice }) }).catch(() => undefined);
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "realtime-voice", minutes: Math.max(1, Math.min(60, Math.ceil(durationSeconds / 60))), timezone, metadata: { mode } }) }).catch(() => undefined);
     }
@@ -84,7 +94,7 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
     realtimeSaveQueueRef.current = Promise.resolve();
     setError(""); setRealtimeStatus("connecting");
     try {
-      const tokenResponse = await fetch("/api/voice/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
+      const tokenResponse = await fetch("/api/voice/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode, voice }) });
       const tokenData = await tokenResponse.json().catch(() => ({}));
       if (!tokenResponse.ok) throw new Error(tokenData.error || "Live voice could not start.");
       const ephemeralKey = tokenData.value || tokenData.client_secret?.value;
@@ -122,7 +132,7 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
   async function speak(text: string) {
     if (!text.trim()) return;
     try {
-      const response = await fetch("/api/voice/speech", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      const response = await fetch("/api/voice/speech", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, voice }) });
       if (response.ok) {
         const audio = new Audio(URL.createObjectURL(await response.blob()));
         setAudioSource("ai");
@@ -203,5 +213,15 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
 
   function stopListening() { recognitionRef.current?.stop(); setIsListening(false); }
 
-  return <div className="modal-backdrop voice-backdrop" role="presentation"><div className="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-title"><button className="icon-button dialog-close" onClick={() => { stopRealtime(); onClose(); }} aria-label="Close voice practice"><X size={18} /></button><div className="voice-header"><div className="voice-icon"><Mic size={20} /></div><div><span className="eyebrow">VOICE PRACTICE</span><h2 id="voice-title">Speak naturally</h2><p>Have a real conversation in {modeLabel} mode. {mode === "ASSISTANT" ? "You can also say “show my progress” or “open my learning path”." : ""}</p></div></div><div className="voice-disclosure"><Volume2 size={14} /> Replies can use an AI-generated voice when OpenAI audio is configured; browser voice is used as a local fallback.<button className="soft-button" onClick={realtimeStatus === "connected" ? stopRealtime : startRealtime} disabled={realtimeStatus === "connecting"}>{realtimeStatus === "connected" ? <><Radio size={14} /> End live audio</> : <><Radio size={14} /> {realtimeStatus === "connecting" ? "Connecting…" : "Start live audio"}</>}</button></div><div className="voice-messages">{messages.slice(-4).map((message) => <div className={message.role === "user" ? "voice-message user" : "voice-message"} key={message.id}><span className="voice-message-icon">{message.role === "assistant" ? <BrainCircuit size={14} /> : <Mic size={14} />}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div>)}</div><div className="voice-listening-card"><div className={isListening || realtimeStatus === "connected" ? "voice-pulse active" : "voice-pulse"}><Mic size={22} /></div><div><strong>{realtimeStatus === "connected" ? "Live audio is on" : isListening ? "Listening…" : isSending ? "Preparing your reply…" : "Your turn to speak"}</strong><small>{realtimeTranscript || transcript || (supported ? "Press the microphone and say a complete sentence." : "Voice input is unavailable here; type your sentence below.")}</small></div>{isListening ? <button className="voice-stop" onClick={stopListening}><Pause size={16} /> Stop</button> : <button className="voice-start" onClick={startListening} disabled={isSending || realtimeStatus === "connected"}><Mic size={16} /> Speak</button>}</div><form className="voice-composer" onSubmit={(event) => { event.preventDefault(); void sendVoiceMessage(draft); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Or type what you want to say…" disabled={isSending || realtimeStatus === "connected"} /><button className="send-button" disabled={!draft.trim() || isSending || realtimeStatus === "connected"} aria-label="Send voice message">{isSending ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}</button></form>{error && <p className="voice-error">{error}</p>}<div className="voice-footer"><span>{realtimeStatus === "connected" || audioSource === "ai" ? "AI voice active" : "Browser voice fallback"}</span><span>Always review and repeat the sentence aloud.</span></div></div></div>;
+  function changeVoice(value: string) {
+    if (!isVoiceName(value)) return;
+    setVoice(value);
+    try {
+      window.localStorage.setItem("english-mastery.voice", value);
+    } catch {
+      // Keep the current selection in memory when persistent storage is unavailable.
+    }
+  }
+
+  return <div className="modal-backdrop voice-backdrop" role="presentation"><div className="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-title"><button className="icon-button dialog-close" onClick={() => { stopRealtime(); onClose(); }} aria-label="Close voice practice"><X size={18} /></button><div className="voice-header"><div className="voice-icon"><Mic size={20} /></div><div><span className="eyebrow">VOICE PRACTICE</span><h2 id="voice-title">Speak naturally</h2><p>Have a real conversation in {modeLabel} mode. {mode === "ASSISTANT" ? "You can also say “show my progress” or “open my learning path”." : ""}</p></div></div><div className="voice-disclosure"><Volume2 size={14} /> Replies can use an AI-generated voice when OpenAI audio is configured; browser voice is used as a local fallback.<button className="soft-button" onClick={realtimeStatus === "connected" ? stopRealtime : startRealtime} disabled={realtimeStatus === "connecting"}>{realtimeStatus === "connected" ? <><Radio size={14} /> End live audio</> : <><Radio size={14} /> {realtimeStatus === "connecting" ? "Connecting…" : "Start live audio"}</>}</button></div><div className="voice-settings"><label htmlFor="voice-choice">Response voice</label><select id="voice-choice" value={voice} onChange={(event) => changeVoice(event.target.value)} disabled={realtimeStatus === "connected" || realtimeStatus === "connecting"}>{voiceOptions.map((option) => <option key={option.value} value={option.value}>{option.label} — {option.description}</option>)}</select><small>The same selection is used for AI replies and live audio. You can change it between sessions.</small></div><div className="voice-messages">{messages.slice(-4).map((message) => <div className={message.role === "user" ? "voice-message user" : "voice-message"} key={message.id}><span className="voice-message-icon">{message.role === "assistant" ? <BrainCircuit size={14} /> : <Mic size={14} />}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div>)}</div><div className="voice-listening-card"><div className={isListening || realtimeStatus === "connected" ? "voice-pulse active" : "voice-pulse"}><Mic size={22} /></div><div><strong>{realtimeStatus === "connected" ? "Live audio is on" : isListening ? "Listening…" : isSending ? "Preparing your reply…" : "Your turn to speak"}</strong><small>{realtimeTranscript || transcript || (supported ? "Press the microphone and say a complete sentence." : "Voice input is unavailable here; type your sentence below.")}</small></div>{isListening ? <button className="voice-stop" onClick={stopListening}><Pause size={16} /> Stop</button> : <button className="voice-start" onClick={startListening} disabled={isSending || realtimeStatus === "connected"}><Mic size={16} /> Speak</button>}</div><form className="voice-composer" onSubmit={(event) => { event.preventDefault(); void sendVoiceMessage(draft); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Or type what you want to say…" disabled={isSending || realtimeStatus === "connected"} /><button className="send-button" disabled={!draft.trim() || isSending || realtimeStatus === "connected"} aria-label="Send voice message">{isSending ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}</button></form>{error && <p className="voice-error">{error}</p>}<div className="voice-footer"><span>{realtimeStatus === "connected" || audioSource === "ai" ? "AI voice active" : "Browser voice fallback"}</span><span>Always review and repeat the sentence aloud.</span></div></div></div>;
 }

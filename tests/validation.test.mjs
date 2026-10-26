@@ -107,6 +107,10 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /monthlyBudgetUsd/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /voice_realtime_session/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /gpt-4o-mini-transcribe/);
+  assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /output: \{ voice \}/);
+  assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /voice/);
+  assert.match(readFileSync(join(root, "src/components/voice-practice.tsx"), "utf8"), /voice-choice/);
+  assert.match(readFileSync(join(root, "src/lib/voice.ts"), "utf8"), /voiceOptions/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /never read internal labels/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/usage/route.ts"), "utf8"), /voice_realtime_duration/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/transcript/route.ts"), "utf8"), /conversationId/);
