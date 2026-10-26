@@ -18,6 +18,7 @@ import { extractCorrection } from "@/lib/corrections";
 type Mode = "ASSISTANT" | "TUTOR" | "SMART";
 type View = "overview" | "chat" | "learn" | "progress" | "settings";
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
+type ConversationSummary = { id: string; title: string; mode: Mode; updatedAt: string };
 type Profile = { proficiencyLevel: string; dailyGoalMinutes: number; currentStreak: number; totalStudyMinutes: number; grammarScore: number; vocabularyScore: number; monthlyBudgetUsd: number };
 
 const modeInfo: Record<Mode, { label: string; eyebrow: string; description: string; color: string }> = {
@@ -47,6 +48,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   const [messages, setMessages] = useState<ChatMessage[]>(starterMessages);
   const [draft, setDraft] = useState("");
   const [conversationId, setConversationId] = useState<string>();
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -73,7 +75,8 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     let cancelled = false;
     fetch("/api/conversations")
       .then(async (response) => response.ok ? response.json() : null)
-      .then(async (data: { conversations?: Array<{ id: string }> } | null) => {
+      .then(async (data: { conversations?: ConversationSummary[] } | null) => {
+        setConversations(data?.conversations || []);
         const latest = data?.conversations?.[0];
         if (!latest || cancelled) return;
         const detailResponse = await fetch(`/api/conversations/${latest.id}`);
@@ -130,6 +133,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     await signOut({ redirect: false });
     setMessages(starterMessages);
     setConversationId(undefined);
+    setConversations([]);
     setDraft("");
     setLiveProfile(null);
     setTodayStudyMinutes(0);
@@ -137,6 +141,23 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     setWebResearch(false);
     setActiveView("overview");
     setAuthOpen(true);
+  }
+
+  async function openConversation(id: string) {
+    const response = await fetch(`/api/conversations/${id}`);
+    const data = await response.json().catch(() => ({})) as { conversation?: { id: string; mode: Mode; messages: Array<{ id: string; role: "USER" | "ASSISTANT"; content: string }> } };
+    if (!response.ok || !data.conversation) return;
+    setConversationId(data.conversation.id);
+    setMode(data.conversation.mode);
+    setMessages(data.conversation.messages.map((message) => ({ id: message.id, role: message.role === "USER" ? "user" : "assistant", content: message.content })));
+    setDraft("");
+  }
+
+  function startNewConversation() {
+    setConversationId(undefined);
+    setMessages(starterMessages);
+    setDraft("");
+    setMode("SMART");
   }
 
   async function sendMessage(event?: React.FormEvent) {
@@ -154,7 +175,11 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
           const dataLine = eventText.split("\n").find((line) => line.startsWith("data: ")); if (!dataLine) continue;
           const data = JSON.parse(dataLine.slice(6)) as { type: string; text?: string; error?: string; conversationId?: string };
           if (data.type === "delta" && data.text) { assistantText += data.text; setMessages((current) => current.map((item) => item.id === assistantMessage.id ? { ...item, content: item.content + data.text } : item)); }
-          if (data.type === "done" && data.conversationId) setConversationId(data.conversationId); if (data.type === "error") throw new Error(data.error || "The assistant could not finish.");
+          if (data.type === "done" && data.conversationId) {
+            setConversationId(data.conversationId);
+            setConversations((current) => [{ id: data.conversationId as string, title: message.slice(0, 56), mode, updatedAt: new Date().toISOString() }, ...current.filter((conversation) => conversation.id !== data.conversationId)].slice(0, 30));
+          }
+          if (data.type === "error") throw new Error(data.error || "The assistant could not finish.");
         }
       }
       saveCorrection(message, assistantText);
@@ -162,7 +187,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   }
 
   function renderMain() {
-    if (activeView === "chat") return <ChatPanel mode={mode} setMode={setMode} messages={messages} draft={draft} setDraft={setDraft} isSending={isSending} sendMessage={sendMessage} user={user} onSignIn={() => setAuthOpen(true)} onVoice={() => setVoiceOpen(true)} webResearch={webResearch} setWebResearch={setWebResearch} webResearchAllowed={webResearchAllowed} />;
+    if (activeView === "chat") return <ChatPanel mode={mode} setMode={setMode} messages={messages} draft={draft} setDraft={setDraft} isSending={isSending} sendMessage={sendMessage} user={user} onSignIn={() => setAuthOpen(true)} onVoice={() => setVoiceOpen(true)} webResearch={webResearch} setWebResearch={setWebResearch} webResearchAllowed={webResearchAllowed} conversations={conversations} conversationId={conversationId} onSelectConversation={openConversation} onNewConversation={startNewConversation} />;
     if (activeView === "learn") return <LearningPath key={userEmail || "guest"} user={user} onStart={startPractice} onSignIn={() => setAuthOpen(true)} />;
     if (activeView === "progress") return <ProgressPanel key={userEmail || "guest"} profile={profile} user={user} />;
     if (activeView === "settings") return <SettingsPanel darkMode={darkMode} setDarkMode={setDarkMode} user={user} dailyGoalMinutes={profile.dailyGoalMinutes} monthlyBudgetUsd={profile.monthlyBudgetUsd} onSignOut={handleSignOut} onDeleted={handleSignOut} onToolPermissionChange={handleToolPermissionChange} />;
@@ -192,10 +217,10 @@ function MetricCard({ icon, label, value, detail, tone }: { icon: React.ReactNod
 function PracticeRow({ number, title, detail, duration, onClick }: { number: string; title: string; detail: string; duration: string; onClick: () => void }) { return <button className="practice-row" onClick={onClick}><span className="practice-number">{number}</span><span className="practice-copy"><strong>{title}</strong><small>{detail}</small></span><span className="practice-duration">{duration}</span><ChevronRight size={16} /></button>; }
 function ProgressBar({ label, value, color }: { label: string; value: number; color: string }) { return <div className="progress-bar-row"><div><span>{label}</span><strong>{value}%</strong></div><div className="progress-track"><span className={`progress-fill ${color}`} style={{ width: `${value}%` }} /></div></div>; }
 
-function ChatPanel({ mode, setMode, messages, draft, setDraft, isSending, sendMessage, user, onSignIn, onVoice, webResearch, setWebResearch, webResearchAllowed }: { mode: Mode; setMode: (mode: Mode) => void; messages: ChatMessage[]; draft: string; setDraft: (value: string) => void; isSending: boolean; sendMessage: (event?: React.FormEvent) => void; user: { name?: string | null } | null; onSignIn: () => void; onVoice: () => void; webResearch: boolean; setWebResearch: (value: boolean) => void; webResearchAllowed: boolean }) {
+function ChatPanel({ mode, setMode, messages, draft, setDraft, isSending, sendMessage, user, onSignIn, onVoice, webResearch, setWebResearch, webResearchAllowed, conversations, conversationId, onSelectConversation, onNewConversation }: { mode: Mode; setMode: (mode: Mode) => void; messages: ChatMessage[]; draft: string; setDraft: (value: string) => void; isSending: boolean; sendMessage: (event?: React.FormEvent) => void; user: { name?: string | null } | null; onSignIn: () => void; onVoice: () => void; webResearch: boolean; setWebResearch: (value: boolean) => void; webResearchAllowed: boolean; conversations: ConversationSummary[]; conversationId?: string; onSelectConversation: (id: string) => void; onNewConversation: () => void }) {
   const info = modeInfo[mode]; const fileInputRef = useRef<HTMLInputElement>(null); const [fileName, setFileName] = useState("");
   async function attachTextFile(event: React.ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (!file) return; const text = await file.text(); setFileName(file.name); setDraft(`Please help me with this document:\n\n${text.slice(0, 12_000)}`); event.target.value = ""; }
-  return <div className="chat-view"><section className="chat-heading"><div><span className={`mode-tag ${info.color}`}>{info.eyebrow}</span><h1>{info.label}</h1><p>{info.description}</p></div><div className="mode-switcher" role="tablist" aria-label="Learning mode">{(Object.keys(modeInfo) as Mode[]).map((item) => <button key={item} className={mode === item ? "mode-switch active" : "mode-switch"} onClick={() => setMode(item)}>{modeInfo[item].label}</button>)}</div></section><div className="chat-workspace"><div className="messages-area">{messages.map((message) => <div className={message.role === "user" ? "message-row user-message" : "message-row"} key={message.id}><div className={message.role === "assistant" ? "message-avatar" : "message-avatar user-avatar"}>{message.role === "assistant" ? <BrainCircuit size={16} /> : <UserRound size={16} />}</div><div className="message-bubble"><span className="message-author">{message.role === "assistant" ? "English Mastery" : "You"}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div></div>)}</div><form className="composer" onSubmit={sendMessage}><textarea id="chat-composer" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={user ? "Ask anything, or practice a sentence…" : "Sign in to start a private conversation…"} onFocus={() => !user && onSignIn()} disabled={!user || isSending} rows={2} /><div className="composer-footer"><div className="composer-tools"><input className="hidden-file-input" ref={fileInputRef} type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={attachTextFile} /><button className="composer-tool document-tool" type="button" onClick={() => fileInputRef.current?.click()} title="Attach a text note" aria-label="Attach a text note"><Paperclip size={17} /></button><button className="composer-tool voice-tool" type="button" onClick={onVoice} title="Open voice practice" aria-label="Open voice practice"><Mic size={17} /></button><button className={webResearch ? "research-toggle active" : "research-toggle"} type="button" onClick={() => setWebResearch(!webResearch)} aria-pressed={webResearch} disabled={!webResearchAllowed} title={webResearchAllowed ? "Require web research for the next message" : "Enable web research in Settings first"}>Web research</button><span>{fileName || (webResearchAllowed ? `English corrections are active in ${info.label}` : "Enable web research in Settings to use public sources")}</span></div><button className="send-button" type="submit" disabled={!draft.trim() || isSending || !user} aria-label="Send message"><Send size={17} /></button></div></form>{webResearch && <p className="research-note">Web search is enabled for the next message and will be recorded in your tool activity.</p>}{!user && <button className="chat-auth-note" onClick={onSignIn}><LockKeyhole size={14} /> Sign in to save your conversations and learning progress</button>}</div></div>;
+  return <div className="chat-view"><section className="chat-heading"><div><span className={`mode-tag ${info.color}`}>{info.eyebrow}</span><h1>{info.label}</h1><p>{info.description}</p></div><div className="mode-switcher" role="tablist" aria-label="Learning mode">{(Object.keys(modeInfo) as Mode[]).map((item) => <button key={item} className={mode === item ? "mode-switch active" : "mode-switch"} onClick={() => setMode(item)}>{modeInfo[item].label}</button>)}</div></section>{conversations.length > 0 && <section className="conversation-history" aria-label="Conversation history"><div className="conversation-history-heading"><span className="eyebrow">RECENT CONVERSATIONS</span><button className="text-button" onClick={onNewConversation}>New conversation</button></div><div className="conversation-history-list">{conversations.slice(0, 6).map((conversation) => <button key={conversation.id} className={conversation.id === conversationId ? "conversation-item active" : "conversation-item"} onClick={() => onSelectConversation(conversation.id)}><strong>{conversation.title || "Untitled conversation"}</strong><small>{modeInfo[conversation.mode]?.label || "Conversation"} · {new Date(conversation.updatedAt).toLocaleDateString()}</small></button>)}</div></section>}<div className="chat-workspace"><div className="messages-area">{messages.map((message) => <div className={message.role === "user" ? "message-row user-message" : "message-row"} key={message.id}><div className={message.role === "assistant" ? "message-avatar" : "message-avatar user-avatar"}>{message.role === "assistant" ? <BrainCircuit size={16} /> : <UserRound size={16} />}</div><div className="message-bubble"><span className="message-author">{message.role === "assistant" ? "English Mastery" : "You"}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div></div>)}</div><form className="composer" onSubmit={sendMessage}><textarea id="chat-composer" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={user ? "Ask anything, or practice a sentence…" : "Sign in to start a private conversation…"} onFocus={() => !user && onSignIn()} disabled={!user || isSending} rows={2} /><div className="composer-footer"><div className="composer-tools"><input className="hidden-file-input" ref={fileInputRef} type="file" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={attachTextFile} /><button className="composer-tool document-tool" type="button" onClick={() => fileInputRef.current?.click()} title="Attach a text note" aria-label="Attach a text note"><Paperclip size={17} /></button><button className="composer-tool voice-tool" type="button" onClick={onVoice} title="Open voice practice" aria-label="Open voice practice"><Mic size={17} /></button><button className={webResearch ? "research-toggle active" : "research-toggle"} type="button" onClick={() => setWebResearch(!webResearch)} aria-pressed={webResearch} disabled={!webResearchAllowed} title={webResearchAllowed ? "Require web research for the next message" : "Enable web research in Settings first"}>Web research</button><span>{fileName || (webResearchAllowed ? `English corrections are active in ${info.label}` : "Enable web research in Settings to use public sources")}</span></div><button className="send-button" type="submit" disabled={!draft.trim() || isSending || !user} aria-label="Send message"><Send size={17} /></button></div></form>{webResearch && <p className="research-note">Web search is enabled for the next message and will be recorded in your tool activity.</p>}{!user && <button className="chat-auth-note" onClick={onSignIn}><LockKeyhole size={14} /> Sign in to save your conversations and learning progress</button>}</div></div>;
 }
 
 function LearningPath({ user, onStart, onSignIn }: { user: { name?: string | null; email?: string | null } | null; onStart: (prompt?: string) => void; onSignIn: () => void }) { return <div className="section-view"><div className="view-intro"><span className="eyebrow">LEARNING PATH</span><h1>Build recall through real situations.</h1><p>Your active focus is irregular verbs plus vocabulary that changes with the environment.</p></div><AdaptiveLessonGrid onStart={onStart} /><AssessmentCard user={user} /><TravelSimulation onStart={onStart} /><PronunciationPractice user={user} onSignIn={onSignIn} /><VocabularyPractice user={user} /><div className="card-panel path-note"><div className="metric-icon violet"><Sparkles size={18} /></div><div><strong>Your curriculum now follows this focus.</strong><p>Each conversation can recycle a verb, place it in context, and check whether you can recall it later.</p></div><button className="soft-button" onClick={() => onStart()}>Practice the focus <ArrowUpRight size={15} /></button></div></div>; }
