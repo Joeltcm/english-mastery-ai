@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# English Mastery AI
 
-## Getting Started
+English Mastery AI is a production-oriented foundation for a personal AI assistant and adaptive English-learning companion. Milestone 1 provides a responsive workspace, secure account flow, PostgreSQL/Prisma data model, private conversation persistence, streaming OpenAI responses, and three learning modes.
 
-First, run the development server:
+## Architecture
+
+- Next.js App Router + TypeScript + Tailwind CSS
+- Route Handlers for authentication, health, conversations, and streaming chat
+- Auth.js credentials provider with JWT sessions and bcrypt password hashing
+- Prisma ORM with PostgreSQL schema and versioned initial migration
+- OpenAI Responses API called only from the server; streamed with SSE to the client
+- Railway configuration includes Prisma client generation, migration deployment, and health checks
+
+## Local setup
+
+1. Copy `.env.example` to `.env.local`.
+2. Set `DATABASE_URL`, `AUTH_SECRET`, and `OPENAI_API_KEY`.
+3. Create or connect a PostgreSQL database.
+4. Apply the schema:
+
+   ```bash
+   npm install
+   npm run db:generate
+   npm run db:migrate
+   ```
+
+5. Start the app:
+
+   ```bash
+   npm run dev
+   ```
+
+Open <http://localhost:3000>. The `/api/health` endpoint reports whether the database and OpenAI credentials are configured. The dashboard can render without credentials, but account creation and AI chat require the corresponding services.
+
+## Commands
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run typecheck
+npm test
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes for auth/chat | PostgreSQL connection string, including Railway's injected value |
+| `AUTH_SECRET` | Yes for auth | Long random secret for Auth.js sessions |
+| `OPENAI_API_KEY` | Yes for AI chat | Server-only OpenAI credential |
+| `OPENAI_MODEL` | Optional | Model used by the Responses API; defaults to `gpt-5.5` |
+| `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Implemented in Milestone 1
 
-## Learn More
+- Responsive light/dark application shell with sidebar navigation.
+- Overview dashboard with daily goal, streak, study time, level, and skill snapshot.
+- Assistant, English Tutor, and Smart Learning modes.
+- Supportive correction instructions, including corrected sentence, natural alternative, and concise Spanish explanation when relevant.
+- Auth.js credentials sign-in and registration with user-scoped data access.
+- Conversation and message persistence with ownership checks.
+- Streaming assistant responses using the server-side OpenAI Responses API.
+- Basic in-memory rate limiting and request validation.
+- Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
+- Railway build/deploy settings and health check.
 
-To learn more about Next.js, take a look at the following resources:
+## Remaining work
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The next milestones add assessment and adaptive lesson execution, real spaced repetition, voice and specialized pronunciation scoring, authorized external tools, travel simulations, data export/account deletion, persistent rate limiting, privacy retention jobs, and deployment verification with live credentials.
