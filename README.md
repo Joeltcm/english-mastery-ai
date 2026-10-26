@@ -51,6 +51,8 @@ npm run build
 | `OPENAI_MODEL` | Optional | Model used by the Responses API; defaults to `gpt-5.5` |
 | `OPENAI_TTS_MODEL` | Optional | TTS model for the voice coach; defaults to `gpt-4o-mini-tts` |
 | `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
+| `AZURE_SPEECH_KEY` | Optional | Server-only Azure Speech key for specialized pronunciation assessment |
+| `AZURE_SPEECH_REGION` | Optional | Azure Speech resource region |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 
 ## Implemented
@@ -63,7 +65,10 @@ npm run build
 - Auth.js credentials sign-in and registration with user-scoped data access.
 - Conversation and message persistence with ownership checks.
 - Streaming assistant responses using the server-side OpenAI Responses API.
+- Optional web research toggle; search is off by default, requires an explicit user action, and writes a scoped tool-execution audit record.
+- Text-note assistance for `.txt`, `.md`, `.csv`, and `.json` attachments, inserted locally into the next user prompt.
 - Voice practice: browser speech recognition, streamed tutor replies, server-side AI speech when configured, and browser speech fallback.
+- Specialized pronunciation assessment adapter using Azure Speech when both Azure variables are configured; without them the UI reports that no score is available.
 - An interactive irregular-verb deck with travel, daily life, work, technology, and international context filters.
 - Spaced-review ratings (`Again`, `Hard`, `Good`, `Easy`) persisted through user-scoped vocabulary APIs when PostgreSQL is connected.
 - Basic in-memory rate limiting and request validation.
