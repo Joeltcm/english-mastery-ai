@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
+import { recordStudySession } from "@/lib/study";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
@@ -35,5 +36,6 @@ export async function POST(request: Request) {
   if (!azureResponse.ok || !best || typeof best.PronScore !== "number") return NextResponse.json({ error: "The pronunciation provider could not assess this recording. No score was saved." }, { status: 502 });
   const feedback = JSON.parse(JSON.stringify({ accuracy: best.AccuracyScore ?? null, fluency: best.FluencyScore ?? null, completeness: best.CompletenessScore ?? null, prosody: best.ProsodyScore ?? null, words: best.Words ?? [] }));
   const attempt = await db.pronunciationAttempt.create({ data: { userId: session.user.id, prompt: referenceText, transcript: best.Display || null, provider: "azure-speech-pronunciation", score: best.PronScore, feedback } });
+  await recordStudySession(session.user.id, { activity: "voice-conversation", minutes: 1, metadata: { pronunciationAttemptId: attempt.id, provider: "azure-speech-pronunciation" } });
   return NextResponse.json({ score: attempt.score, transcript: attempt.transcript, feedback, attemptId: attempt.id });
 }
