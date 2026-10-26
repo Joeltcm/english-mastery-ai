@@ -120,6 +120,6 @@ npm run deploy:preflight
 
 ## Remaining work
 
-Remaining production work is live credential/deployment verification. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
+Remaining production work is live credential/deployment verification. This checkout currently has no configured Git remote, so private GitHub repository setup and Railway deployment still require the owner’s repository access and production credentials. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
 
 Before a Railway deployment, run `npm run deploy:preflight` with the production environment variables loaded. It validates required configuration and deployment artifacts without printing secret values; a non-zero result means deployment should stop until the missing configuration is supplied.
