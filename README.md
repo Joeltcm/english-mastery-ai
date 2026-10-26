@@ -112,7 +112,7 @@ npm audit --omit=dev --audit-level=high
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
 - Privacy export includes conversations, lesson attempts, learning data, tool audit records, and per-user AI usage events without secrets.
 - User-approved memories can be created, edited, and deleted from Settings.
-- Installable PWA manifest with PNG icons for desktop/Android, a 180px Apple touch icon, iOS metadata, service-worker registration, and offline shell fallback.
+- Installable PWA manifest with PNG icons for desktop/Android, a 180px Apple touch icon, iOS metadata, service-worker registration, public-asset caching, and offline shell fallback without caching authenticated HTML.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
 - TTS and Realtime voice sessions are included in per-user AI usage history; both voice paths respect the monthly budget when their optional pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, voice turns, and completed Tutor/Smart text turns so progress reflects completed activity.
