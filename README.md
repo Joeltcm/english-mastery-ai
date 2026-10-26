@@ -1,11 +1,11 @@
 # English Mastery AI
 
-English Mastery AI is a production-oriented foundation for a personal AI assistant and adaptive English-learning companion. Milestone 1 provides a responsive workspace, secure account flow, PostgreSQL/Prisma data model, private conversation persistence, streaming OpenAI responses, and three learning modes.
+English Mastery AI is a production-oriented personal AI assistant and adaptive English-learning companion. The current local build includes a responsive workspace, secure account flow, PostgreSQL/Prisma data model, private conversation persistence, streaming OpenAI responses, voice practice, contextual verb reviews, assessment, privacy controls, and PWA support.
 
 ## Architecture
 
 - Next.js App Router + TypeScript + Tailwind CSS
-- Route Handlers for authentication, health, conversations, streaming chat, vocabulary reviews, and voice speech
+- Route Handlers for authentication, health, conversations, streaming chat, assessment, progress, profile, vocabulary reviews, privacy, memory, and voice speech
 - Auth.js credentials provider with JWT sessions and bcrypt password hashing
 - Prisma ORM with PostgreSQL schema and versioned initial migration
 - OpenAI Responses API called only from the server; streamed with SSE to the client, with optional server-side TTS
@@ -53,7 +53,7 @@ npm run build
 | `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 
-## Implemented in Milestone 1
+## Implemented
 
 - Responsive light/dark application shell with sidebar navigation.
 - Overview dashboard with daily goal, streak, study time, level, and skill snapshot.
@@ -69,7 +69,12 @@ npm run build
 - Basic in-memory rate limiting and request validation.
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
+- Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
+- Travel role-play launcher for airport, hotel, and international work situations, connected to Tutor mode.
+- Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
+- Privacy export, account deletion confirmation, and user-approved memory CRUD.
+- Installable PWA manifest, icon, service-worker registration, and offline shell fallback.
 
 ## Remaining work
 
-The next milestones add assessment and adaptive lesson execution, specialized pronunciation scoring, authorized external tools, travel simulations, data export/account deletion, persistent rate limiting, privacy retention jobs, and deployment verification with live credentials. The current voice coach uses browser recognition and optional speech synthesis; production-grade low-latency realtime audio and pronunciation scoring remain separate upgrades.
+The remaining milestones add specialized pronunciation scoring, authorized external tools with approval gates, travel simulations, persistent rate limiting, privacy retention jobs, production low-latency realtime audio, and deployment verification with live Railway/PostgreSQL/OpenAI credentials. The app deliberately shows “not assessed” when no specialized pronunciation result exists.

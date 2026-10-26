@@ -2,9 +2,13 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
 import { db } from "@/lib/prisma";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { registrationSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
+  const source = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rate = consumeRateLimit(`register:${source}`, 5, 600_000);
+  if (!rate.allowed) return NextResponse.json({ error: `Too many registration attempts. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "Database is not configured yet." }, { status: 503 });
   const parsed = registrationSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Please check your name, email, and password." }, { status: 400 });
