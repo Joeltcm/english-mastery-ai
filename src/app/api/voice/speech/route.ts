@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   let speech;
   try {
-    speech = await client.audio.speech.create({ model, voice, input: text, response_format: "mp3", ...(model.includes("gpt-4o-mini-tts") ? { instructions: "Warm, clear English teacher voice. Natural pauses, encouraging tone, moderate pace." } : {}) });
+    speech = await client.audio.speech.create({ model, voice, input: text, response_format: "mp3", ...(model.includes("gpt-4o-mini-tts") ? { instructions: "Speak like a warm, patient human conversation partner and English teacher. Use a natural conversational rhythm, contractions, short pauses, and a moderate pace. Sound expressive and present, never like an announcer, audiobook, or robotic lesson." } : {}) });
   } catch {
     return NextResponse.json({ error: "The AI voice provider could not generate audio." }, { status: 502 });
   }

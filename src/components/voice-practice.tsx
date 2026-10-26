@@ -16,7 +16,7 @@ type Recognition = { lang: string; interimResults: boolean; continuous: boolean;
 type RecognitionConstructor = new () => Recognition;
 type RealtimeStatus = "idle" | "connecting" | "connected" | "error";
 
-const voiceIntro: VoiceMessage = { id: "voice-intro", role: "assistant", content: "Hi! Speak naturally. I’ll answer in English, keep the conversation moving, and gently help you improve when it matters." };
+const voiceIntro: VoiceMessage = { id: "voice-intro", role: "assistant", content: "Hi! Let’s have a natural conversation. I’ll keep it moving and gently weave in corrections when they help." };
 
 export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: { mode: Mode; user: User; onAgentAction?: (action: AgentAction) => void; onClose: () => void; onSignIn: () => void }) {
   const modeLabel = mode === "ASSISTANT" ? "Agent Assistant" : mode === "TUTOR" ? "English Tutor" : "Smart Learning";
