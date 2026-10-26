@@ -87,6 +87,7 @@ npm run deploy:preflight
 - Persistent PostgreSQL-backed rate limiting for registration and chat, with an in-memory fallback for local/offline development.
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
+- Production-oriented security headers, including MIME, framing, referrer, and microphone policy controls.
 - Health check is intentionally degraded-but-usable during local development and strict in production, so Railway cannot accept a deployment missing required services.
 - Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
 - Adaptive lesson catalog persisted in PostgreSQL, ordered from the learner’s weaker skill and tracked through lesson attempts; it covers grammar, vocabulary, irregular verbs, listening, reading, writing, and speaking.
