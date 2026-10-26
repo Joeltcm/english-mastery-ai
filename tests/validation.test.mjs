@@ -63,7 +63,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /text-conversation/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /studyActivity/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /timeZone: timezone/);
-  assert.match(readFileSync(join(root, "src/lib/study.ts"), "utf8"), /localDateKey/);
+  assert.match(readFileSync(join(root, "src/lib/study.ts"), "utf8"), /calculateStudyStreak/);
   assert.match(readFileSync(join(root, "src/app/api/study-sessions/route.ts"), "utf8"), /timezone/);
   assert.doesNotMatch(readFileSync(join(root, "src/components/voice-practice.tsx"), "utf8"), /activity: "voice-conversation"/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /Enable web research in Settings/);

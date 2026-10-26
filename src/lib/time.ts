@@ -38,3 +38,13 @@ export function startOfLocalDay(date: Date, timeZone: string) {
   }
   return candidate;
 }
+
+export function calculateStudyStreak(sessionDates: Date[], now = new Date(), requestedTimeZone?: string) {
+  const timeZone = safeTimeZone(requestedTimeZone);
+  const activeDays = new Set(sessionDates.map((date) => localDateKey(date, timeZone)));
+  const cursor = startOfLocalDay(now, timeZone);
+  if (!activeDays.has(localDateKey(cursor, timeZone))) cursor.setUTCDate(cursor.getUTCDate() - 1);
+  let currentStreak = 0;
+  while (activeDays.has(localDateKey(cursor, timeZone))) { currentStreak += 1; cursor.setUTCDate(cursor.getUTCDate() - 1); }
+  return currentStreak;
+}

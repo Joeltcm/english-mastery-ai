@@ -56,6 +56,13 @@ test("progress date helpers respect the learner time zone", async () => {
   assert.equal(startOfLocalDay(latePanamaNight, "America/Panama").toISOString(), "2026-10-25T05:00:00.000Z");
 });
 
+test("study streaks use local calendar days", async () => {
+  const { calculateStudyStreak } = await loadTypeScriptModule("src/lib/time.ts");
+  const lateNightPanama = new Date("2026-10-26T04:00:00.000Z");
+  assert.equal(calculateStudyStreak([new Date("2026-10-26T04:00:00.000Z"), new Date("2026-10-25T04:00:00.000Z")], lateNightPanama, "America/Panama"), 2);
+  assert.equal(calculateStudyStreak([new Date("2026-10-26T04:00:00.000Z"), new Date("2026-10-25T04:00:00.000Z")], new Date("2026-10-26T06:00:00.000Z"), "America/Panama"), 2);
+});
+
 test("pronunciation audio is normalized to mono 16 kHz PCM WAV", async () => {
   const { encodePcmWav } = await loadTypeScriptModule("src/lib/audio.ts");
   const wav = encodePcmWav({ numberOfChannels: 2, length: 4, sampleRate: 8_000, getChannelData: (channel) => new Float32Array(channel === 0 ? [0, 0.5, 1, 0] : [0, -0.5, -1, 0]) });
