@@ -89,7 +89,7 @@ npm run deploy:preflight
 - Streaming assistant responses using the server-side OpenAI Responses API.
 - Optional web research toggle; search is off by default, requires an explicit user action, and writes a scoped tool-execution audit record.
 - Per-user web-research permission in Settings, enforced server-side before any search is approved or executed.
-- Text-note assistance for `.txt`, `.md`, `.csv`, and `.json` attachments, inserted locally into the next user prompt.
+- Text-note assistance for `.txt`, `.md`, `.csv`, and `.json` attachments, inserted locally into the next user prompt with a 1 MB limit and untrusted-content delimiters; files are not uploaded by the browser.
 - Voice practice: browser speech recognition, streamed tutor replies, server-side AI speech when configured, and browser speech fallback.
 - Low-latency live voice via WebRTC and an ephemeral server-issued Realtime session key when OpenAI Realtime is configured; the prior turn-based voice flow remains available as fallback.
 - Specialized pronunciation assessment adapter using Azure Speech when both Azure variables are configured; without them the UI reports that no score is available.
