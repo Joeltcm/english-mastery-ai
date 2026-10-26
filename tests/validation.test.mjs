@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { join } from "node:path";
 
@@ -35,6 +35,8 @@ test("learning and privacy surfaces are present", () => {
   assert.equal(manifest.start_url, "/");
   assert.equal(manifest.scope, "/");
   assert.equal(manifest.icons.length >= 2, true);
+  assert.equal(manifest.icons.every((icon) => icon.type === "image/png"), true);
+  for (const icon of ["public/icon-192.png", "public/icon-512.png", "public/apple-touch-icon.png"]) assert.equal(existsSync(join(root, icon)), true, icon);
   assert.match(readFileSync(join(root, "src/app/layout.tsx"), "utf8"), /appleWebApp/);
   assert.match(readFileSync(join(root, "next.config.ts"), "utf8"), /X-Content-Type-Options/);
   assert.match(readFileSync(join(root, "next.config.ts"), "utf8"), /Permissions-Policy/);
