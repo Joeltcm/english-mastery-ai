@@ -7,7 +7,7 @@ export default async function Home() {
   let profile = null;
   if (session?.user?.id && process.env.DATABASE_URL) {
     try {
-      profile = await db.learningProfile.findUnique({ where: { userId: session.user.id }, select: { proficiencyLevel: true, dailyGoalMinutes: true, currentStreak: true, totalStudyMinutes: true, grammarScore: true, vocabularyScore: true } });
+      profile = await db.learningProfile.findUnique({ where: { userId: session.user.id }, select: { proficiencyLevel: true, dailyGoalMinutes: true, currentStreak: true, totalStudyMinutes: true, grammarScore: true, vocabularyScore: true, monthlyBudgetUsd: true } });
     } catch {
       profile = null;
     }

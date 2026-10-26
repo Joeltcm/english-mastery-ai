@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { buildSystemPrompt } from "@/lib/learning";
 import { db } from "@/lib/prisma";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { estimateCostUsd, monthStart, monthlyBudgetDefault } from "@/lib/usage";
 import { chatRequestSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
@@ -19,6 +20,13 @@ export async function POST(request: Request) {
 
   const { conversationId, message, mode, webResearch } = parsed.data;
   const userId = session.user.id;
+  const [usageProfile, usageAggregate] = await Promise.all([
+    db.learningProfile.findUnique({ where: { userId }, select: { monthlyBudgetUsd: true } }),
+    db.aiUsageEvent.aggregate({ where: { userId, createdAt: { gte: monthStart() } }, _sum: { estimatedCostUsd: true } }),
+  ]);
+  const monthlyBudget = usageProfile?.monthlyBudgetUsd ?? monthlyBudgetDefault();
+  const estimatedUsage = usageAggregate._sum.estimatedCostUsd || 0;
+  if (monthlyBudget > 0 && estimatedUsage >= monthlyBudget && process.env.OPENAI_INPUT_COST_PER_MILLION_USD && process.env.OPENAI_OUTPUT_COST_PER_MILLION_USD) return NextResponse.json({ error: "Your monthly AI budget has been reached. Update the budget in Settings to continue." }, { status: 429 });
   const conversation = conversationId
     ? await db.conversation.findFirst({ where: { id: conversationId, userId } })
     : await db.conversation.create({ data: { userId, mode, title: message.slice(0, 56) } });
@@ -32,6 +40,8 @@ export async function POST(request: Request) {
   const stream = await client.responses.create({ model: process.env.OPENAI_MODEL || "gpt-5.5", instructions: `${buildSystemPrompt(mode)}${memoryInstruction}${webResearch ? "\nWeb research is explicitly enabled for this turn. Use the web search tool, cite the sources you relied on, and distinguish current facts from general knowledge." : ""}`, input: previousMessages.map((item) => ({ role: item.role === "USER" ? "user" : item.role === "SYSTEM" ? "system" : "assistant", content: item.content })), ...(webResearch ? { tools: [{ type: "web_search", search_context_size: "medium" as const }], tool_choice: "required" as const } : {}), stream: true, store: false });
   const encoder = new TextEncoder();
   let fullText = "";
+  let inputTokens = 0;
+  let outputTokens = 0;
   const responseStream = new ReadableStream({
     async start(controller) {
       try {
@@ -40,12 +50,17 @@ export async function POST(request: Request) {
             fullText += event.delta;
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", text: event.delta })}\n\n`));
           }
+          if (event.type === "response.completed") {
+            inputTokens = event.response.usage?.input_tokens || 0;
+            outputTokens = event.response.usage?.output_tokens || 0;
+          }
         }
         if (fullText.trim()) {
           await db.message.create({ data: { conversationId: conversation.id, role: "ASSISTANT", content: fullText, mode } });
           await db.conversation.update({ where: { id: conversation.id }, data: { mode } });
         }
         if (toolExecution) await db.toolExecution.update({ where: { id: toolExecution.id }, data: { status: "COMPLETED", completedAt: new Date(), output: { responseTextLength: fullText.length } } });
+        await db.aiUsageEvent.create({ data: { userId, provider: "openai", model: process.env.OPENAI_MODEL || "gpt-5.5", kind: webResearch ? "chat_web_search" : "chat", inputTokens, outputTokens, estimatedCostUsd: estimateCostUsd(inputTokens, outputTokens), metadata: { conversationId: conversation.id, mode, webResearch } } });
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done", conversationId: conversation.id })}\n\n`));
         controller.close();
       } catch {

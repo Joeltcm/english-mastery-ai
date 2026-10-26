@@ -15,6 +15,7 @@ test("learning and privacy surfaces are present", () => {
     "src/app/api/assessment/route.ts",
     "src/app/api/progress/route.ts",
     "src/app/api/profile/route.ts",
+    "src/app/api/usage/route.ts",
     "src/app/api/privacy/export/route.ts",
     "src/app/api/account/route.ts",
     "src/app/api/memories/route.ts",
@@ -25,4 +26,5 @@ test("learning and privacy surfaces are present", () => {
   const manifest = JSON.parse(readFileSync(join(root, "public/manifest.webmanifest"), "utf8"));
   assert.equal(manifest.display, "standalone");
   assert.equal(manifest.start_url, "/");
+  assert.match(readFileSync(join(root, "prisma/schema.prisma"), "utf8"), /model AiUsageEvent/);
 });

@@ -74,6 +74,7 @@ model User {
   agentMemories         AgentMemory[]
   toolConnections       ToolConnection[]
   toolExecutions        ToolExecution[]
+  aiUsageEvents         AiUsageEvent[]
 }
 
 model Account {
@@ -143,6 +144,7 @@ model LearningProfile {
   vocabularyScore      Int      @default(48)
   pronunciationScore   Int?
   correctionPreference Boolean  @default(true)
+  monthlyBudgetUsd     Float    @default(5)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -297,5 +299,20 @@ model ToolExecution {
   completedAt DateTime?
   createdAt   DateTime   @default(now())
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
+
+model AiUsageEvent {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  model             String
+  kind              String
+  inputTokens       Int      @default(0)
+  outputTokens      Int      @default(0)
+  estimatedCostUsd  Float    @default(0)
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, createdAt])
 }

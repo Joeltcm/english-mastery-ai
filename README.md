@@ -53,6 +53,9 @@ npm run build
 | `OPENAI_TTS_VOICE` | Optional | TTS voice; defaults to `coral` |
 | `AZURE_SPEECH_KEY` | Optional | Server-only Azure Speech key for specialized pronunciation assessment |
 | `AZURE_SPEECH_REGION` | Optional | Azure Speech resource region |
+| `AI_DEFAULT_MONTHLY_BUDGET_USD` | Optional | Default per-user estimated AI budget; defaults to `5` |
+| `OPENAI_INPUT_COST_PER_MILLION_USD` | Optional | Current input-token price used for budget estimates |
+| `OPENAI_OUTPUT_COST_PER_MILLION_USD` | Optional | Current output-token price used for budget estimates |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 
 ## Implemented
@@ -79,7 +82,8 @@ npm run build
 - Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
 - Installable PWA manifest, icon, service-worker registration, and offline shell fallback.
+- Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
 
 ## Remaining work
 
-The remaining milestones add specialized pronunciation scoring, authorized external tools with approval gates, travel simulations, persistent rate limiting, privacy retention jobs, production low-latency realtime audio, and deployment verification with live Railway/PostgreSQL/OpenAI credentials. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
+Remaining production work is live credential/deployment verification, persistent distributed rate limiting, privacy retention scheduling, and a low-latency realtime audio transport. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
