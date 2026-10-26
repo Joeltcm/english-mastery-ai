@@ -38,6 +38,8 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
   const realtimeStreamRef = useRef<MediaStream | null>(null);
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
   const realtimeStartedAtRef = useRef<number | null>(null);
+  const realtimeConversationIdRef = useRef<string | undefined>(undefined);
+  const realtimeSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     return () => { recognitionRef.current?.stop(); realtimeChannelRef.current?.close(); realtimeConnectionRef.current?.close(); realtimeStreamRef.current?.getTracks().forEach((track) => track.stop()); window.speechSynthesis?.cancel(); };
@@ -63,10 +65,21 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
     setRealtimeStatus("idle");
   }
 
+  function queueRealtimeTranscript(role: "USER" | "ASSISTANT", content: string) {
+    if (!user || !content.trim()) return;
+    realtimeSaveQueueRef.current = realtimeSaveQueueRef.current.then(async () => {
+      const response = await fetch("/api/voice/realtime/transcript", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId: realtimeConversationIdRef.current, role, content, mode }) });
+      const data = await response.json().catch(() => ({})) as { conversationId?: string };
+      if (response.ok && data.conversationId) realtimeConversationIdRef.current = data.conversationId;
+    }).catch(() => undefined);
+  }
+
   async function startRealtime() {
     if (!user) { onSignIn(); return; }
     if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) { setError("Live audio is not available in this browser. You can use the regular microphone button or type below."); setRealtimeStatus("error"); return; }
     stopListening();
+    realtimeConversationIdRef.current = undefined;
+    realtimeSaveQueueRef.current = Promise.resolve();
     setError(""); setRealtimeStatus("connecting");
     try {
       const tokenResponse = await fetch("/api/voice/realtime", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
@@ -82,10 +95,11 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
       stream.getTracks().forEach((track) => connection.addTrack(track, stream));
       const channel = connection.createDataChannel("oai-events");
       channel.onmessage = (event) => {
-        const payload = JSON.parse(event.data) as { type?: string; transcript?: string; item_id?: string };
+        let payload: { type?: string; transcript?: string; item_id?: string };
+        try { payload = JSON.parse(event.data) as { type?: string; transcript?: string; item_id?: string }; } catch { return; }
         if (payload.transcript) setRealtimeTranscript(payload.transcript);
-        if (payload.type === "conversation.item.input_audio_transcription.completed" && payload.transcript) setMessages((current) => [...current, { id: payload.item_id || crypto.randomUUID(), role: "user" as const, content: payload.transcript as string }].slice(-6));
-        if ((payload.type === "response.audio_transcript.done" || payload.type === "response.output_audio_transcript.done") && payload.transcript) setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant" as const, content: payload.transcript as string }].slice(-6));
+        if (payload.type === "conversation.item.input_audio_transcription.completed" && payload.transcript) { setMessages((current) => [...current, { id: payload.item_id || crypto.randomUUID(), role: "user" as const, content: payload.transcript as string }].slice(-6)); queueRealtimeTranscript("USER", payload.transcript); }
+        if ((payload.type === "response.audio_transcript.done" || payload.type === "response.output_audio_transcript.done") && payload.transcript) { setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant" as const, content: payload.transcript as string }].slice(-6)); queueRealtimeTranscript("ASSISTANT", payload.transcript); }
       };
       const offer = await connection.createOffer(); await connection.setLocalDescription(offer);
       const answerResponse = await fetch("https://api.openai.com/v1/realtime/calls", { method: "POST", headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" }, body: offer.sdp });

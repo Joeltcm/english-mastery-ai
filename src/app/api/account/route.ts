@@ -29,6 +29,7 @@ export async function DELETE(request: Request) {
     `vocabulary-review:${session.user.id}`,
     `voice-realtime-usage:${session.user.id}`,
     `voice-realtime:${session.user.id}`,
+    `voice-realtime-transcript:${session.user.id}`,
     `voice-speech:${session.user.id}`,
     `login:${user.email}`,
   ];

@@ -22,6 +22,7 @@ test("learning and privacy surfaces are present", () => {
     "src/app/api/voice/speech/route.ts",
     "src/app/api/voice/realtime/route.ts",
     "src/app/api/voice/realtime/usage/route.ts",
+    "src/app/api/voice/realtime/transcript/route.ts",
     "src/app/api/pronunciation/assess/route.ts",
     "src/app/api/study-sessions/route.ts",
     "src/app/api/maintenance/retention/route.ts",
@@ -86,6 +87,8 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /voice_realtime_session/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /gpt-4o-mini-transcribe/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/usage/route.ts"), "utf8"), /voice_realtime_duration/);
+  assert.match(readFileSync(join(root, "src/app/api/voice/realtime/transcript/route.ts"), "utf8"), /conversationId/);
+  assert.match(readFileSync(join(root, "src/app/api/voice/realtime/transcript/route.ts"), "utf8"), /userId: session.user.id/);
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /No score was saved/);
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /AbortSignal\.timeout/);
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /recordStudySession/);
