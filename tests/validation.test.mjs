@@ -21,6 +21,7 @@ test("learning and privacy surfaces are present", () => {
     "src/app/api/memories/route.ts",
     "src/app/api/voice/speech/route.ts",
     "src/app/api/voice/realtime/route.ts",
+    "src/app/api/voice/realtime/usage/route.ts",
     "src/app/api/pronunciation/assess/route.ts",
     "src/app/api/study-sessions/route.ts",
     "src/app/api/maintenance/retention/route.ts",
@@ -66,6 +67,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /voice_tts/);
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /monthlyBudgetUsd/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /voice_realtime_session/);
+  assert.match(readFileSync(join(root, "src/app/api/voice/realtime/usage/route.ts"), "utf8"), /voice_realtime_duration/);
   assert.match(readFileSync(join(root, "src/app/api/health/route.ts"), "utf8"), /HEALTHCHECK_STRICT/);
   assert.match(readFileSync(join(root, "src/lib/learning.ts"), "utf8"), /Explicación \(ES\)/);
   assert.match(readFileSync(join(root, "src/auth.ts"), "utf8"), /login:\$\{email\}/);

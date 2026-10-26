@@ -59,6 +59,7 @@ npm run deploy:preflight
 | `OPENAI_INPUT_COST_PER_MILLION_USD` | Optional | Current input-token price used for budget estimates |
 | `OPENAI_OUTPUT_COST_PER_MILLION_USD` | Optional | Current output-token price used for budget estimates |
 | `OPENAI_TTS_COST_PER_MILLION_CHAR_USD` | Optional | TTS character price used for optional voice-cost estimates |
+| `OPENAI_REALTIME_COST_PER_MINUTE_USD` | Optional | Realtime voice minute price used for optional voice-cost estimates |
 | `NEXT_PUBLIC_APP_URL` | Optional | Public application URL |
 | `HEALTHCHECK_STRICT` | Optional | Set to `true` to require PostgreSQL and OpenAI for a healthy deployment response; production mode is strict automatically |
 | `CRON_SECRET` | Required for retention cleanup | Secret for the scheduled privacy-maintenance request |
@@ -111,7 +112,7 @@ npm run deploy:preflight
 - User-approved memories can be created, edited, and deleted from Settings.
 - Installable PWA manifest with PNG icons for desktop/Android, a 180px Apple touch icon, iOS metadata, service-worker registration, and offline shell fallback.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
-- TTS and Realtime voice sessions are included in per-user AI usage history; TTS requests also respect the monthly budget when its optional pricing variable is configured.
+- TTS and Realtime voice sessions are included in per-user AI usage history; both voice paths respect the monthly budget when their optional pricing variables are configured.
 - Study-session recording connected to assessments, vocabulary recall blocks, voice turns, and completed Tutor/Smart text turns so progress reflects completed activity.
 - Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.
 - Railway cron-service template in `railway.retention.toml` plus `scripts/run-retention.mjs`; configure that file as a separate Railway service with `RETENTION_APP_URL` and the same `CRON_SECRET` as the web service.

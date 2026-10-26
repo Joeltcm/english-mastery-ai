@@ -46,7 +46,9 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
   function stopRealtime() {
     const startedAt = realtimeStartedAtRef.current;
     if (user && startedAt) {
-      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "realtime-voice", minutes: Math.max(1, Math.min(60, Math.ceil((Date.now() - startedAt) / 60_000))), metadata: { mode } }) }).catch(() => undefined);
+      const durationSeconds = Math.max(1, Math.min(7_200, Math.ceil((Date.now() - startedAt) / 1_000)));
+      void fetch("/api/voice/realtime/usage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ durationSeconds, mode }) }).catch(() => undefined);
+      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "realtime-voice", minutes: Math.max(1, Math.min(60, Math.ceil(durationSeconds / 60))), metadata: { mode } }) }).catch(() => undefined);
     }
     realtimeChannelRef.current?.close();
     realtimeConnectionRef.current?.close();
