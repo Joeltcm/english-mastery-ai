@@ -53,9 +53,10 @@ export function PrivacyControls({ user, onDeleted }: { user: User; onDeleted: ()
   }
 
   async function deleteAccount() {
-    if (!window.confirm("This permanently deletes your account and learning data. Continue?")) return;
+    const confirmation = window.prompt("This permanently deletes your account and learning data. Type DELETE MY ACCOUNT to continue.");
+    if (confirmation !== "DELETE MY ACCOUNT") { if (confirmation !== null) setError("Account deletion cancelled. The confirmation phrase did not match."); return; }
     setBusy(true); setError("");
-    const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmation: "DELETE MY ACCOUNT" }) });
+    const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmation }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) { setError(data.error || "Account deletion failed."); setBusy(false); return; }
     onDeleted();
