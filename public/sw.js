@@ -1,4 +1,4 @@
-const CACHE_NAME = "english-mastery-shell-v3";
+const CACHE_NAME = "english-mastery-shell-v4";
 const APP_SHELL = ["/offline.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
