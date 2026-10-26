@@ -75,6 +75,7 @@ npm run deploy:preflight
 - Conversation and message persistence with ownership checks.
 - Streaming assistant responses using the server-side OpenAI Responses API.
 - Optional web research toggle; search is off by default, requires an explicit user action, and writes a scoped tool-execution audit record.
+- Per-user web-research permission in Settings, enforced server-side before any search is approved or executed.
 - Text-note assistance for `.txt`, `.md`, `.csv`, and `.json` attachments, inserted locally into the next user prompt.
 - Voice practice: browser speech recognition, streamed tutor replies, server-side AI speech when configured, and browser speech fallback.
 - Low-latency live voice via WebRTC and an ephemeral server-issued Realtime session key when OpenAI Realtime is configured; the prior turn-based voice flow remains available as fallback.

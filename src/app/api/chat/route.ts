@@ -21,6 +21,10 @@ export async function POST(request: Request) {
 
   const { conversationId, message, mode, webResearch } = parsed.data;
   const userId = session.user.id;
+  if (webResearch) {
+    const permission = await db.toolConnection.findUnique({ where: { userId_provider: { userId, provider: "web_research" } }, select: { enabled: true } });
+    if (!permission?.enabled) return NextResponse.json({ error: "Enable web research in Settings before approving a search." }, { status: 403 });
+  }
   const [usageProfile, usageAggregate] = await Promise.all([
     db.learningProfile.findUnique({ where: { userId }, select: { monthlyBudgetUsd: true } }),
     db.aiUsageEvent.aggregate({ where: { userId, createdAt: { gte: monthStart() } }, _sum: { estimatedCostUsd: true } }),

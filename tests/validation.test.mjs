@@ -27,6 +27,7 @@ test("learning and privacy surfaces are present", () => {
     "src/app/api/lessons/route.ts",
     "src/app/api/lessons/[slug]/attempt/route.ts",
     "src/app/api/grammar-errors/route.ts",
+    "src/app/api/tools/route.ts",
   ];
   for (const route of routes) assert.equal(readFileSync(join(root, route), "utf8").length > 0, true, route);
   const manifest = JSON.parse(readFileSync(join(root, "public/manifest.webmanifest"), "utf8"));
@@ -47,6 +48,8 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /new Intl\.DateTimeFormat/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /provider could not start/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /text-conversation/);
+  assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /Enable web research in Settings/);
+  assert.match(readFileSync(join(root, "src/components/tool-permissions.tsx"), "utf8"), /explicit toggle/);
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /provider could not generate audio/);
   assert.match(readFileSync(join(root, "src/app/api/health/route.ts"), "utf8"), /HEALTHCHECK_STRICT/);
   assert.match(readFileSync(join(root, "src/lib/learning.ts"), "utf8"), /Explicación \(ES\)/);
