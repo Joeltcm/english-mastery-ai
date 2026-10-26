@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     db.assessment.findMany({ where: { userId }, orderBy: { completedAt: "desc" }, take: 5, select: { id: true, kind: true, level: true, completedAt: true } }),
     db.pronunciationAttempt.aggregate({ where: { userId, score: { not: null } }, _avg: { score: true }, _count: { score: true } }),
     db.grammarError.count({ where: { userId } }),
-    db.grammarError.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3, select: { id: true, correctedText: true, explanationEs: true, createdAt: true } }),
+    db.grammarError.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3, select: { id: true, correctedText: true, explanationEs: true, resolved: true, createdAt: true } }),
   ]);
   const minutesByDay = new Map<string, number>();
   for (let offset = 6; offset >= 0; offset -= 1) { const date = new Date(todayStart); date.setUTCDate(date.getUTCDate() - offset); minutesByDay.set(localDateKey(date, timeZone), 0); }

@@ -111,6 +111,7 @@ npm audit --omit=dev --audit-level=high
 - Travel role-play launcher for airport, hotel, and international work situations, connected to Tutor mode.
 - Progress endpoint aggregating reviews, study minutes, seven-day study rhythm, latest assessment, and pronunciation records without inventing scores; daily boundaries and recorded study streaks follow the learner's browser time zone.
 - Correction history is captured only when the tutor emits an explicit correction block and is surfaced in the grammar progress view.
+- Saved corrections can be marked as practiced and reopened from the progress view.
 - Privacy export, account deletion confirmation, and user-approved memory CRUD.
 - Privacy export includes conversations, lesson attempts, learning data, tool audit records, and per-user AI usage events without secrets.
 - User-approved memories can be created, edited, and deleted from Settings.

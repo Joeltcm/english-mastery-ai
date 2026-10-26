@@ -29,6 +29,7 @@ test("learning and privacy surfaces are present", () => {
     "src/app/api/lessons/route.ts",
     "src/app/api/lessons/[slug]/attempt/route.ts",
     "src/app/api/grammar-errors/route.ts",
+    "src/app/api/grammar-errors/[id]/route.ts",
     "src/app/api/tools/route.ts",
   ];
   for (const route of routes) assert.equal(readFileSync(join(root, route), "utf8").length > 0, true, route);
@@ -76,6 +77,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/components/tool-permissions.tsx"), "utf8"), /explicit toggle/);
   assert.match(readFileSync(join(root, "src/app/api/privacy/export/route.ts"), "utf8"), /aiUsageEvents/);
   assert.match(readFileSync(join(root, "src/app/api/privacy/export/route.ts"), "utf8"), /lessonAttempts/);
+  assert.match(readFileSync(join(root, "src/app/api/grammar-errors/[id]/route.ts"), "utf8"), /resolved/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /RECENT CONVERSATIONS/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /onSelectConversation/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /untrusted reference content/);
