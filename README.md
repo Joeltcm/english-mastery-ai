@@ -96,7 +96,7 @@ npm run deploy:preflight
 - User-approved memories can be created, edited, and deleted from Settings.
 - Installable PWA manifest with scope, adaptive icon declarations, iOS metadata, service-worker registration, and offline shell fallback.
 - Per-user AI usage events, monthly token totals, configurable budgets, and a server-side budget gate when pricing variables are configured.
-- Study-session recording connected to assessments, vocabulary recall blocks, and voice turns so progress reflects completed activity.
+- Study-session recording connected to assessments, vocabulary recall blocks, voice turns, and completed Tutor/Smart text turns so progress reflects completed activity.
 - Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.
 - Railway cron-service template in `railway.retention.toml` plus `scripts/run-retention.mjs`; configure that file as a separate Railway service with `RETENTION_APP_URL` and the same `CRON_SECRET` as the web service.
 
