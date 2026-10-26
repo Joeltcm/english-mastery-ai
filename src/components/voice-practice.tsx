@@ -35,16 +35,31 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
     if (typeof window === "undefined") return defaultVoice;
     try { const savedVoice = window.localStorage.getItem("english-mastery.voice"); return isVoiceName(savedVoice) ? savedVoice : defaultVoice; } catch { return defaultVoice; }
   });
+  const [deviceVoices, setDeviceVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [deviceVoiceUri, setDeviceVoiceUri] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try { return window.localStorage.getItem("english-mastery.device-voice") || ""; } catch { return ""; }
+  });
   const recognitionRef = useRef<Recognition | null>(null);
+
+  useEffect(() => {
+    const synthesis = window.speechSynthesis;
+    if (!synthesis) return;
+    const loadVoices = () => setDeviceVoices(synthesis.getVoices().filter((candidate) => candidate.lang.toLowerCase().startsWith("en")));
+    loadVoices();
+    synthesis.addEventListener("voiceschanged", loadVoices);
+    return () => synthesis.removeEventListener("voiceschanged", loadVoices);
+  }, []);
 
   useEffect(() => () => { recognitionRef.current?.stop(); window.speechSynthesis?.cancel(); }, []);
 
   async function speak(text: string) {
     if (!text.trim() || !window.speechSynthesis) return;
     const utterance = new SpeechSynthesisUtterance(text);
-    const deviceVoice = window.speechSynthesis.getVoices().find((candidate) => candidate.lang.toLowerCase().startsWith("en"));
+    const availableVoices = deviceVoices.length ? deviceVoices : window.speechSynthesis.getVoices().filter((candidate) => candidate.lang.toLowerCase().startsWith("en"));
+    const deviceVoice = availableVoices.find((candidate) => candidate.voiceURI === deviceVoiceUri) || availableVoices[0];
     if (deviceVoice) utterance.voice = deviceVoice;
-    utterance.lang = "en-US";
+    utterance.lang = deviceVoice?.lang || "en-US";
     const style = voiceOptions.find((option) => option.value === voice)?.style || voiceOptions[0].style;
     utterance.rate = style.rate;
     utterance.pitch = style.pitch;
@@ -111,5 +126,10 @@ export function VoicePractice({ mode, user, onAgentAction, onClose, onSignIn }: 
     try { window.localStorage.setItem("english-mastery.voice", value); } catch { /* Memory-only preference is fine. */ }
   }
 
-  return <div className="modal-backdrop voice-backdrop" role="presentation"><div className="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-title"><button className="icon-button dialog-close" onClick={onClose} aria-label="Close voice practice"><X size={18} /></button><div className="voice-header"><div className="voice-icon"><Mic size={20} /></div><div><span className="eyebrow">VOICE PRACTICE</span><h2 id="voice-title">Speak naturally</h2><p>Have a real conversation in {modeLabel} mode. {mode === "ASSISTANT" ? "You can also say “show my progress” or “open my learning path”." : ""}</p></div></div><div className="voice-disclosure"><Volume2 size={14} /> DeepSeek handles the conversation. Speech is processed locally by your browser, so there is no OpenAI audio charge.</div><div className="voice-settings"><label htmlFor="voice-choice">Device voice style</label><select id="voice-choice" value={voice} onChange={(event) => changeVoice(event.target.value)}>{voiceOptions.map((option) => <option key={option.value} value={option.value}>{option.label} — {option.description}</option>)}</select><small>The English voice installed on your device is used. The selector changes its speaking rhythm.</small></div><div className="voice-messages">{messages.slice(-4).map((message) => <div className={message.role === "user" ? "voice-message user" : "voice-message"} key={message.id}><span className="voice-message-icon">{message.role === "assistant" ? <BrainCircuit size={14} /> : <Mic size={14} />}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div>)}</div><div className="voice-listening-card"><div className={isListening ? "voice-pulse active" : "voice-pulse"}><Mic size={22} /></div><div><strong>{isListening ? "Listening…" : isSending ? "Preparing your reply…" : "Your turn to speak"}</strong><small>{transcript || (supported ? "Press the microphone and say a complete sentence." : "Voice input is unavailable here; type your sentence below.")}</small></div>{isListening ? <button className="voice-stop" onClick={stopListening}><Pause size={16} /> Stop</button> : <button className="voice-start" onClick={startListening} disabled={isSending}><Mic size={16} /> Speak</button>}</div><form className="voice-composer" onSubmit={(event) => { event.preventDefault(); void sendVoiceMessage(draft); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Or type what you want to say…" disabled={isSending} /><button className="send-button" disabled={!draft.trim() || isSending} aria-label="Send voice message">{isSending ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}</button></form>{error && <p className="voice-error">{error}</p>}<div className="voice-footer"><span>Device voice active</span><span>Always review and repeat the sentence aloud.</span></div></div></div>;
+  function changeDeviceVoice(value: string) {
+    setDeviceVoiceUri(value);
+    try { window.localStorage.setItem("english-mastery.device-voice", value); } catch { /* Memory-only preference is fine. */ }
+  }
+
+  return <div className="modal-backdrop voice-backdrop" role="presentation"><div className="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voice-title"><button className="icon-button dialog-close" onClick={onClose} aria-label="Close voice practice"><X size={18} /></button><div className="voice-header"><div className="voice-icon"><Mic size={20} /></div><div><span className="eyebrow">VOICE PRACTICE</span><h2 id="voice-title">Speak naturally</h2><p>Have a real conversation in {modeLabel} mode. {mode === "ASSISTANT" ? "You can also say “show my progress” or “open my learning path”." : ""}</p></div></div><div className="voice-disclosure"><Volume2 size={14} /> DeepSeek handles the conversation. Speech is processed locally by your browser, so there is no OpenAI audio charge.</div><div className="voice-settings"><label htmlFor="device-voice-choice">English voice</label><select id="device-voice-choice" value={deviceVoiceUri} onChange={(event) => changeDeviceVoice(event.target.value)} disabled={!deviceVoices.length}><option value="">{deviceVoices.length ? "Automatic voice" : "Loading device voices…"}</option>{deviceVoices.map((candidate) => <option key={candidate.voiceURI} value={candidate.voiceURI}>{candidate.name} — {candidate.lang}</option>)}</select><small>Choose the voice installed on your device. Available voices depend on your browser and operating system.</small><label htmlFor="voice-choice">Speaking style</label><select id="voice-choice" value={voice} onChange={(event) => changeVoice(event.target.value)}>{voiceOptions.map((option) => <option key={option.value} value={option.value}>{option.label} — {option.description}</option>)}</select></div><div className="voice-messages">{messages.slice(-4).map((message) => <div className={message.role === "user" ? "voice-message user" : "voice-message"} key={message.id}><span className="voice-message-icon">{message.role === "assistant" ? <BrainCircuit size={14} /> : <Mic size={14} />}</span><p>{message.content || (isSending ? "Thinking…" : "")}</p></div>)}</div><div className="voice-listening-card"><div className={isListening ? "voice-pulse active" : "voice-pulse"}><Mic size={22} /></div><div><strong>{isListening ? "Listening…" : isSending ? "Preparing your reply…" : "Your turn to speak"}</strong><small>{transcript || (supported ? "Press the microphone and say a complete sentence." : "Voice input is unavailable here; type your sentence below.")}</small></div>{isListening ? <button className="voice-stop" onClick={stopListening}><Pause size={16} /> Stop</button> : <button className="voice-start" onClick={startListening} disabled={isSending}><Mic size={16} /> Speak</button>}</div><form className="voice-composer" onSubmit={(event) => { event.preventDefault(); void sendVoiceMessage(draft); }}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Or type what you want to say…" disabled={isSending} /><button className="send-button" disabled={!draft.trim() || isSending} aria-label="Send voice message">{isSending ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}</button></form>{error && <p className="voice-error">{error}</p>}<div className="voice-footer"><span>Device voice active</span><span>Always review and repeat the sentence aloud.</span></div></div></div>;
 }
