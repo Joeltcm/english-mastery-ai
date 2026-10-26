@@ -71,6 +71,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /voice_tts/);
   assert.match(readFileSync(join(root, "src/app/api/voice/speech/route.ts"), "utf8"), /monthlyBudgetUsd/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /voice_realtime_session/);
+  assert.match(readFileSync(join(root, "src/app/api/voice/realtime/route.ts"), "utf8"), /gpt-4o-mini-transcribe/);
   assert.match(readFileSync(join(root, "src/app/api/voice/realtime/usage/route.ts"), "utf8"), /voice_realtime_duration/);
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /No score was saved/);
   assert.match(readFileSync(join(root, "src/app/api/pronunciation/assess/route.ts"), "utf8"), /AbortSignal\.timeout/);

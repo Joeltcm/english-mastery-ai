@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ session: { type: "realtime", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", instructions: `${buildSystemPrompt(mode)}\nThis is a live voice conversation. Never interrupt the learner. Keep replies concise enough for natural turn-taking. Correct meaningful English mistakes after the learner finishes speaking.` } }),
+      body: JSON.stringify({ session: { type: "realtime", model: process.env.OPENAI_REALTIME_MODEL || "gpt-realtime", instructions: `${buildSystemPrompt(mode)}\nThis is a live voice conversation. Never interrupt the learner. Keep replies concise enough for natural turn-taking. Correct meaningful English mistakes after the learner finishes speaking.`, audio: { input: { transcription: { model: "gpt-4o-mini-transcribe", language: "en" } } } } }),
     });
   } catch {
     return NextResponse.json({ error: "The live voice provider could not be reached. Try again shortly." }, { status: 502 });

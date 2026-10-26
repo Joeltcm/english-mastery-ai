@@ -81,8 +81,9 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
       stream.getTracks().forEach((track) => connection.addTrack(track, stream));
       const channel = connection.createDataChannel("oai-events");
       channel.onmessage = (event) => {
-        const payload = JSON.parse(event.data) as { type?: string; transcript?: string };
+        const payload = JSON.parse(event.data) as { type?: string; transcript?: string; item_id?: string };
         if (payload.transcript) setRealtimeTranscript(payload.transcript);
+        if (payload.type === "conversation.item.input_audio_transcription.completed" && payload.transcript) setMessages((current) => [...current, { id: payload.item_id || crypto.randomUUID(), role: "user" as const, content: payload.transcript as string }].slice(-6));
         if ((payload.type === "response.audio_transcript.done" || payload.type === "response.output_audio_transcript.done") && payload.transcript) setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant" as const, content: payload.transcript as string }].slice(-6));
       };
       const offer = await connection.createOffer(); await connection.setLocalDescription(offer);
