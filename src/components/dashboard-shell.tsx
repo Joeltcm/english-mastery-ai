@@ -38,8 +38,8 @@ function saveCorrection(originalText: string, assistantText: string) {
 }
 
 export function DashboardShell({ initialUser, initialProfile }: { initialUser: { name?: string | null; email?: string | null } | null; initialProfile: Profile | null }) {
-  const { data: session } = useSession();
-  const user = session?.user ?? initialUser;
+  const { data: session, status } = useSession();
+  const user = status === "loading" ? initialUser : session?.user ?? null;
   const userEmail = user?.email;
   const [activeView, setActiveView] = useState<View>("overview");
   const [mode, setMode] = useState<Mode>("SMART");
@@ -112,6 +112,11 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     } catch (error) { setAuthError(error instanceof Error ? error.message : "Unable to sign in."); } finally { setAuthBusy(false); }
   }
 
+  async function handleSignOut() {
+    await signOut({ redirect: false });
+    setAuthOpen(true);
+  }
+
   async function sendMessage(event?: React.FormEvent) {
     event?.preventDefault(); const message = draft.trim(); if (!message || isSending) return; if (!user) { setAuthOpen(true); return; }
     const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", content: message }; const assistantMessage: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
@@ -138,7 +143,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     if (activeView === "chat") return <ChatPanel mode={mode} setMode={setMode} messages={messages} draft={draft} setDraft={setDraft} isSending={isSending} sendMessage={sendMessage} user={user} onSignIn={() => setAuthOpen(true)} onVoice={() => setVoiceOpen(true)} webResearch={webResearch} setWebResearch={setWebResearch} />;
     if (activeView === "learn") return <LearningPath user={user} onStart={startPractice} onSignIn={() => setAuthOpen(true)} />;
     if (activeView === "progress") return <ProgressPanel profile={profile} user={user} />;
-    if (activeView === "settings") return <SettingsPanel darkMode={darkMode} setDarkMode={setDarkMode} user={user} dailyGoalMinutes={profile.dailyGoalMinutes} monthlyBudgetUsd={profile.monthlyBudgetUsd} onSignOut={() => signOut({ redirect: false })} onDeleted={() => signOut({ redirect: false })} />;
+    if (activeView === "settings") return <SettingsPanel darkMode={darkMode} setDarkMode={setDarkMode} user={user} dailyGoalMinutes={profile.dailyGoalMinutes} monthlyBudgetUsd={profile.monthlyBudgetUsd} onSignOut={handleSignOut} onDeleted={handleSignOut} />;
     return <Overview name={displayName} profile={profile} progressPercent={progressPercent} onChat={() => goTo("chat")} onLearn={() => goTo("learn")} />;
   }
 
@@ -147,7 +152,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
       <div className="brand-row"><div className="brand-mark"><BrainCircuit size={20} /></div><span>English Mastery</span><button className="icon-button mobile-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18} /></button></div>
       <div className="workspace-label">YOUR LEARNING SPACE</div><nav className="nav-list" aria-label="Main navigation">{navItems.map(({ id, label, icon: Icon }) => <button key={id} className={activeView === id ? "nav-item active" : "nav-item"} onClick={() => goTo(id)}><Icon size={18} /><span>{label}</span>{id === "chat" && <span className="nav-dot" />}</button>)}</nav>
       <div className="sidebar-spacer" /><div className="sidebar-tip"><Sparkles size={17} /><div><strong>Small steps, big fluency</strong><p>Your daily goal is {profile.dailyGoalMinutes} minutes.</p></div></div>
-      {user ? <div className="user-card"><div className="avatar">{displayName.slice(0, 1).toUpperCase()}</div><div className="user-card-copy"><strong>{user.name || "Learner"}</strong><span>{profile.proficiencyLevel} learner</span></div><button className="icon-button" onClick={() => signOut({ redirect: false })} aria-label="Sign out"><ArrowUpRight size={16} /></button></div> : <button className="sidebar-signin" onClick={() => setAuthOpen(true)}><LockKeyhole size={16} /> Sign in to save progress</button>}
+      {user ? <div className="user-card"><div className="avatar">{displayName.slice(0, 1).toUpperCase()}</div><div className="user-card-copy"><strong>{user.name || "Learner"}</strong><span>{profile.proficiencyLevel} learner</span></div><button className="icon-button" onClick={() => void handleSignOut()} aria-label="Sign out"><ArrowUpRight size={16} /></button></div> : <button className="sidebar-signin" onClick={() => setAuthOpen(true)}><LockKeyhole size={16} /> Sign in to save progress</button>}
     </aside>
     {mobileOpen && <button className="sidebar-overlay" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}
     <main className="main-content"><header className="topbar"><button className="icon-button menu-button" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button><div className="breadcrumbs"><span>Workspace</span><ChevronRight size={14} /><strong>{navItems.find((item) => item.id === activeView)?.label}</strong></div><div className="topbar-actions"><button className="icon-button" onClick={() => setDarkMode((current) => !current)} aria-label="Toggle theme">{darkMode ? <SunMedium size={18} /> : <Moon size={18} />}</button>{user ? <button className="profile-chip" onClick={() => goTo("settings")}><span className="avatar small">{displayName.slice(0, 1).toUpperCase()}</span><span>{displayName}</span></button> : <button className="top-signin" onClick={() => setAuthOpen(true)}>Sign in</button>}</div></header><div className="page-content">{renderMain()}</div></main>
