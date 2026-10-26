@@ -126,13 +126,12 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
     const message = rawText.trim();
     if (!message || isSending) return;
     if (!user) { onSignIn(); return; }
-    const turnStartedAt = Date.now();
     setError(""); setTranscript(message); setDraft(""); setIsSending(true);
     const userMessage: VoiceMessage = { id: crypto.randomUUID(), role: "user", content: message };
     const assistantMessage: VoiceMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
     setMessages((current) => [...current, userMessage, assistantMessage]);
     try {
-      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId, message, mode }) });
+      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversationId, message, mode, studyActivity: "voice-conversation" }) });
       if (!response.ok || !response.body) { const data = await response.json().catch(() => ({})); throw new Error(data.error || "The voice coach could not respond."); }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; let reply = "";
       while (true) {
@@ -148,7 +147,6 @@ export function VoicePractice({ mode, user, onClose, onSignIn }: { mode: Mode; u
       await speak(removeCorrectionLabels(reply));
       const correction = extractCorrection(reply);
       if (correction) void fetch("/api/grammar-errors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ originalText: message, correctedText: correction.correctedText, naturalAlternative: correction.naturalAlternative, explanationEs: correction.explanationEs }) }).catch(() => undefined);
-      void fetch("/api/study-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ activity: "voice-conversation", minutes: Math.max(1, Math.min(15, Math.ceil((Date.now() - turnStartedAt) / 60_000))), metadata: { mode, messageLength: message.length } }) }).catch(() => undefined);
     } catch (caught) {
       const messageError = caught instanceof Error ? caught.message : "The voice coach could not respond.";
       setError(messageError);
