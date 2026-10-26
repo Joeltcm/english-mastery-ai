@@ -13,7 +13,7 @@ async function loadTypeScriptModule(relativePath) {
 }
 
 test("correction extraction requires explicit correction and Spanish explanation labels", async () => {
-  const { extractCorrection } = await loadTypeScriptModule("src/lib/corrections.ts");
+  const { extractCorrection, removeCorrectionLabels } = await loadTypeScriptModule("src/lib/corrections.ts");
   assert.deepEqual(extractCorrection("Correction: I went to the airport.\nNatural alternative: I headed to the airport.\nExplicación (ES): Usamos el pasado irregular de go."), {
     correctedText: "I went to the airport.",
     naturalAlternative: "I headed to the airport.",
@@ -21,6 +21,7 @@ test("correction extraction requires explicit correction and Spanish explanation
   });
   assert.equal(extractCorrection("That sentence is understandable, but no correction block was provided."), null);
   assert.equal(extractCorrection("Correction: I went to the airport."), null);
+  assert.equal(removeCorrectionLabels("The answer is ready.\nCorrection: I went to the airport.\nExplicación (ES): Usa went."), "The answer is ready.");
 });
 
 test("learning prompts preserve the original request and active focus", async () => {

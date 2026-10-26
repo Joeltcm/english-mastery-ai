@@ -11,3 +11,8 @@ export function extractCorrection(text: string): ExtractedCorrection | null {
   const explanationEs = lineValue(text, "Explicación(?: \\(ES\\))?");
   return correctedText && explanationEs ? { correctedText, naturalAlternative, explanationEs } : null;
 }
+
+export function removeCorrectionLabels(text: string) {
+  const spoken = text.split(/\r?\n/).filter((line) => !/^\s*(?:\*\*)?(?:Correction|Natural alternative|Explicación(?: \(ES\))?)(?:\*\*)?\s*:/i.test(line)).join(" ").replace(/\s+/g, " ").trim();
+  return spoken || text.trim();
+}
