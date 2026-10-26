@@ -83,7 +83,7 @@ npm run build
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
 - Initial check-in with grammar/context vocabulary questions, level calculation, and profile persistence.
-- Adaptive lesson catalog persisted in PostgreSQL, ordered from the learner’s weaker skill and tracked through lesson attempts.
+- Adaptive lesson catalog persisted in PostgreSQL, ordered from the learner’s weaker skill and tracked through lesson attempts; it covers grammar, vocabulary, irregular verbs, listening, reading, writing, and speaking.
 - Periodic check-ins become due after seven recorded study sessions following the latest assessment.
 - Travel role-play launcher for airport, hotel, and international work situations, connected to Tutor mode.
 - Progress endpoint aggregating reviews, study minutes, latest assessment, and pronunciation records without inventing scores.
