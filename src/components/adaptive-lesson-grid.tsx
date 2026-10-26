@@ -7,7 +7,9 @@ type Lesson = { slug: string; title: string; description: string; type: string; 
 
 const tones = ["violet", "sky", "green", "violet"];
 
-export function AdaptiveLessonGrid({ onStart }: { onStart: (prompt?: string) => void }) {
+type User = { name?: string | null; email?: string | null } | null;
+
+export function AdaptiveLessonGrid({ onStart, user, onSignIn }: { onStart: (prompt?: string) => void; user: User; onSignIn: () => void }) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingSlug, setSavingSlug] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export function AdaptiveLessonGrid({ onStart }: { onStart: (prompt?: string) => 
   if (loading) return <div className="lesson-grid"><div className="card-panel"><span className="eyebrow">ADAPTIVE PLAN</span><p className="assessment-note">Preparing your next lessons…</p></div></div>;
 
   async function markPracticed(lesson: Lesson) {
+    if (!user) { onSignIn(); return; }
     setSavingSlug(lesson.slug);
     const response = await fetch(`/api/lessons/${lesson.slug}/attempt`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
     if (response.ok) setLessons((current) => current.map((item) => item.slug === lesson.slug ? { ...item, attemptCount: item.attemptCount + 1, recommended: false } : item));
