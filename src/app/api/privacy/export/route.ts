@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to export your data." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "PostgreSQL is not configured." }, { status: 503 });
-  const rate = consumeRateLimit(`export:${session.user.id}`, 5, 3_600_000);
+  const rate = await consumePersistentRateLimit(`export:${session.user.id}`, 5, 3_600_000);
   if (!rate.allowed) return NextResponse.json({ error: `Too many exports. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const userId = session.user.id;
   const [user, profile, conversations, vocabularyItems, reviews, grammarErrors, pronunciationAttempts, assessments, studySessions, memories, toolConnections, toolExecutions, aiUsageEvents] = await Promise.all([

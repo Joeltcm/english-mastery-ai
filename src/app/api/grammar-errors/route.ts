@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 const grammarErrorSchema = z.object({ originalText: z.string().trim().min(1).max(6_000), correctedText: z.string().trim().min(1).max(2_000), naturalAlternative: z.string().trim().max(2_000).optional(), explanationEs: z.string().trim().min(1).max(2_000), category: z.string().trim().max(80).optional() });
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to save correction history." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ saved: false, databaseConfigured: false });
-  const rate = consumeRateLimit(`grammar-error:${session.user.id}`, 60, 3_600_000);
+  const rate = await consumePersistentRateLimit(`grammar-error:${session.user.id}`, 60, 3_600_000);
   if (!rate.allowed) return NextResponse.json({ error: `Too many correction updates. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const parsed = grammarErrorSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "The correction data is invalid." }, { status: 400 });

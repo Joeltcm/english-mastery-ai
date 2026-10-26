@@ -85,7 +85,7 @@ npm run deploy:preflight
 - Specialized pronunciation assessment adapter using Azure Speech when both Azure variables are configured; without them the UI reports that no score is available.
 - An interactive irregular-verb deck with travel, daily life, work, technology, and international context filters.
 - Spaced-review ratings (`Again`, `Hard`, `Good`, `Easy`) persisted through user-scoped vocabulary APIs when PostgreSQL is connected.
-- Persistent PostgreSQL-backed rate limiting for registration and chat, with an in-memory fallback for local/offline development.
+- Persistent PostgreSQL-backed rate limiting for authentication, learning updates, privacy exports, voice, and chat, with an in-memory fallback for local/offline development.
 - Relational models for the learning engine, assessments, vocabulary reviews, pronunciation attempts, memory, tool connections, and audit records.
 - Railway build/deploy settings and health check.
 - Production-oriented security headers, including MIME, framing, referrer, and microphone policy controls.

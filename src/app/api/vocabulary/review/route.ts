@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 const reviewSchema = z.object({ vocabularyId: z.string().cuid(), rating: z.enum(["AGAIN", "HARD", "GOOD", "EASY"]), responseMs: z.number().int().min(0).max(120_000).optional() });
 
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to save reviews." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ saved: false, databaseConfigured: false });
-  const rate = consumeRateLimit(`vocabulary-review:${session.user.id}`, 120);
+  const rate = await consumePersistentRateLimit(`vocabulary-review:${session.user.id}`, 120);
   if (!rate.allowed) return NextResponse.json({ error: `Too many review requests. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const parsed = reviewSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "The review is invalid." }, { status: 400 });

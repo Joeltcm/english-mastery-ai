@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/prisma";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 
 const assessmentSchema = z.object({ kind: z.string().trim().min(2).max(40), level: z.string().trim().min(2).max(10), scores: z.record(z.string(), z.number().min(0).max(100)), answers: z.array(z.object({ questionId: z.string().max(40), answer: z.string().max(100), correct: z.boolean() })).max(50) });
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to save your assessment." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ saved: false, databaseConfigured: false });
-  const rate = consumeRateLimit(`assessment:${session.user.id}`, 6, 3_600_000);
+  const rate = await consumePersistentRateLimit(`assessment:${session.user.id}`, 6, 3_600_000);
   if (!rate.allowed) return NextResponse.json({ error: `Too many assessments. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const parsed = assessmentSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "The assessment data is invalid." }, { status: 400 });

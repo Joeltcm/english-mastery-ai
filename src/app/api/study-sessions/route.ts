@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumePersistentRateLimit } from "@/lib/rate-limit";
 import { recordStudySession } from "@/lib/study";
 
 const studySessionSchema = z.object({
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Sign in to record study time." }, { status: 401 });
   if (!process.env.DATABASE_URL) return NextResponse.json({ error: "PostgreSQL is not configured." }, { status: 503 });
-  const rate = consumeRateLimit(`study-session:${session.user.id}`, 60, 3_600_000);
+  const rate = await consumePersistentRateLimit(`study-session:${session.user.id}`, 60, 3_600_000);
   if (!rate.allowed) return NextResponse.json({ error: `Too many study-session updates. Try again in ${rate.retryAfter} seconds.` }, { status: 429 });
   const parsed = studySessionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "The study session details are invalid." }, { status: 400 });
