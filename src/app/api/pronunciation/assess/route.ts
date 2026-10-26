@@ -24,7 +24,12 @@ export async function POST(request: Request) {
 
   const pronunciationHeader = Buffer.from(JSON.stringify({ ReferenceText: referenceText, GradingSystem: "HundredMark", Granularity: "Word", Dimension: "Comprehensive", EnableProsodyAssessment: "True", EnableMiscue: "True" })).toString("base64");
   const endpoint = `https://${process.env.AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed`;
-  const azureResponse = await fetch(endpoint, { method: "POST", headers: { Accept: "application/json", "Content-Type": contentType, "Ocp-Apim-Subscription-Key": process.env.AZURE_SPEECH_KEY, "Pronunciation-Assessment": pronunciationHeader }, body: await audio.arrayBuffer() });
+  let azureResponse: Response;
+  try {
+    azureResponse = await fetch(endpoint, { method: "POST", headers: { Accept: "application/json", "Content-Type": contentType, "Ocp-Apim-Subscription-Key": process.env.AZURE_SPEECH_KEY, "Pronunciation-Assessment": pronunciationHeader }, body: await audio.arrayBuffer(), signal: AbortSignal.timeout(30_000) });
+  } catch {
+    return NextResponse.json({ error: "The pronunciation provider could not be reached. No score was saved." }, { status: 502 });
+  }
   const azureData = await azureResponse.json().catch(() => null) as { RecognitionStatus?: string; NBest?: Array<{ Display?: string; PronScore?: number; AccuracyScore?: number; FluencyScore?: number; CompletenessScore?: number; ProsodyScore?: number; Words?: unknown[] }> } | null;
   const best = azureData?.NBest?.[0];
   if (!azureResponse.ok || !best || typeof best.PronScore !== "number") return NextResponse.json({ error: "The pronunciation provider could not assess this recording. No score was saved." }, { status: 502 });
