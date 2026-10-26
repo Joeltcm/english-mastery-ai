@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { buildSystemPrompt } from "@/lib/learning";
 import { db } from "@/lib/prisma";
 import { consumePersistentRateLimit } from "@/lib/rate-limit";
+import { recordStudySession } from "@/lib/study";
 import { estimateCostUsd, monthStart, monthlyBudgetDefault } from "@/lib/usage";
 import { chatRequestSchema } from "@/lib/validation";
 
@@ -64,6 +65,13 @@ export async function POST(request: Request) {
         if (fullText.trim()) {
           await db.message.create({ data: { conversationId: conversation.id, role: "ASSISTANT", content: fullText, mode } });
           await db.conversation.update({ where: { id: conversation.id }, data: { mode } });
+          if (mode !== "ASSISTANT") {
+            await recordStudySession(userId, {
+              activity: "text-conversation",
+              minutes: 1,
+              metadata: { mode, conversationId: conversation.id, messageLength: message.length },
+            }).catch(() => undefined);
+          }
         }
         if (toolExecution) await db.toolExecution.update({ where: { id: toolExecution.id }, data: { status: "COMPLETED", completedAt: new Date(), output: { responseTextLength: fullText.length } } });
         await db.aiUsageEvent.create({ data: { userId, provider: "openai", model: process.env.OPENAI_MODEL || "gpt-5.5", kind: webResearch ? "chat_web_search" : "chat", inputTokens, outputTokens, estimatedCostUsd: estimateCostUsd(inputTokens, outputTokens), metadata: { conversationId: conversation.id, mode, webResearch } } });
