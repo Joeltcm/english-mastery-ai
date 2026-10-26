@@ -71,6 +71,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /Enable web research in Settings/);
   assert.match(readFileSync(join(root, "src/components/tool-permissions.tsx"), "utf8"), /explicit toggle/);
   assert.match(readFileSync(join(root, "src/app/api/privacy/export/route.ts"), "utf8"), /aiUsageEvents/);
+  assert.match(readFileSync(join(root, "src/app/api/privacy/export/route.ts"), "utf8"), /lessonAttempts/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /RECENT CONVERSATIONS/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /onSelectConversation/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /untrusted reference content/);
