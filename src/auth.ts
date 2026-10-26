@@ -21,5 +21,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return { id: user.id, email: user.email, name: user.name };
     },
   })],
-  callbacks: { async session({ session, token }) { if (session.user && token.sub) session.user.id = token.sub; return session; } },
+  callbacks: {
+    async jwt({ token }) {
+      if (token.sub && process.env.DATABASE_URL) {
+        const user = await db.user.findUnique({ where: { id: token.sub }, select: { id: true } });
+        if (!user) return {};
+      }
+      return token;
+    },
+    async session({ session, token }) { if (session.user && token.sub) session.user.id = token.sub; return session; },
+  },
 });
