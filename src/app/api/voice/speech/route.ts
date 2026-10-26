@@ -16,6 +16,11 @@ export async function POST(request: Request) {
 
   const model = process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts";
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const speech = await client.audio.speech.create({ model, voice: process.env.OPENAI_TTS_VOICE || "coral", input: text, response_format: "mp3", ...(model.includes("gpt-4o-mini-tts") ? { instructions: "Warm, clear English teacher voice. Natural pauses, encouraging tone, moderate pace." } : {}) });
+  let speech;
+  try {
+    speech = await client.audio.speech.create({ model, voice: process.env.OPENAI_TTS_VOICE || "coral", input: text, response_format: "mp3", ...(model.includes("gpt-4o-mini-tts") ? { instructions: "Warm, clear English teacher voice. Natural pauses, encouraging tone, moderate pace." } : {}) });
+  } catch {
+    return NextResponse.json({ error: "The AI voice provider could not generate audio." }, { status: 502 });
+  }
   return new Response(await speech.arrayBuffer(), { headers: { "Content-Type": "audio/mpeg", "Cache-Control": "no-store" } });
 }
