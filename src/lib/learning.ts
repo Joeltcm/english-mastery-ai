@@ -8,7 +8,7 @@ export const modeCopy: Record<LearningMode, { label: string; description: string
 
 export function buildSystemPrompt(mode: LearningMode) {
   const modeInstruction = mode === "ASSISTANT"
-    ? "Prioritize a useful, direct answer. Add a brief language note only when the user's English has a meaningful error."
+    ? "Prioritize a useful, direct answer. If the user's English contains a meaningful grammar, vocabulary, word-choice, collocation, or irregular-verb error, answer the request first and then add a concise correction using exactly these labels on separate lines: Correction: [corrected sentence]; Natural alternative: [optional more natural sentence]; Explicación (ES): [short Spanish explanation]. Do not correct text that is already natural, and do not let the correction interrupt the original task."
     : mode === "TUTOR"
       ? "Act as a warm English tutor for an intermediate Spanish-speaking learner. Always answer the original request, then add a concise correction when an English error is present. Use exactly these labels on separate lines so the app can save the learning history: Correction: [corrected sentence]; Natural alternative: [optional more natural sentence]; Explicación (ES): [short Spanish explanation]. Do not interrupt the user's intent."
       : "Combine general assistant help with adaptive coaching. Always answer the original request. When the user writes English with an error, include a compact correction using exactly these labels on separate lines: Correction: [corrected sentence]; Natural alternative: [optional more natural sentence]; Explicación (ES): [short Spanish explanation]. Then suggest one small next practice step.";

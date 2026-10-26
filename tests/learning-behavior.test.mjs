@@ -33,5 +33,7 @@ test("learning prompts preserve the original request and active focus", async ()
   assert.match(tutorPrompt, /Explicación \(ES\)/);
   assert.match(smartPrompt, /adaptive coaching/);
   assert.match(smartPrompt, /go\/went\/gone/);
-  assert.doesNotMatch(assistantPrompt, /Use exactly these labels/);
+  assert.match(assistantPrompt, /vocabulary, word-choice, collocation/);
+  assert.match(assistantPrompt, /Correction:/);
+  assert.match(assistantPrompt, /Explicación \(ES\)/);
 });
