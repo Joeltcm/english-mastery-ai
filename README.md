@@ -74,7 +74,7 @@ npm audit --omit=dev --audit-level=high
 3. Use the committed `railway.toml`; its build command generates Prisma and Next.js, while its start command runs `prisma migrate deploy` before `next start`.
 4. Set `HEALTHCHECK_STRICT=true` and confirm `/api/health` reports `ready` before sharing the URL. A `degraded` response is expected only for local development without services.
 5. Add a second Railway service using `railway.retention.toml`, set the same `CRON_SECRET` on both services, and set `RETENTION_APP_URL` to the web service URL.
-6. Run `npm run deploy:preflight` with the production environment loaded. A non-zero result is a deployment stop signal; it does not claim that deployment succeeded.
+6. Configure the private Git remote and run `npm run deploy:preflight` with the production environment loaded. The preflight checks the remote, required variables, migrations, and Railway files; a non-zero result is a deployment stop signal and does not claim that deployment succeeded.
 
 ## Implemented
 
