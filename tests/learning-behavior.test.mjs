@@ -40,13 +40,17 @@ test("learning prompts preserve the original request and active focus", async ()
 });
 
 test("explicit English continuation requests override Spanish correction defaults", async () => {
-  const { buildSystemPrompt, learnerRequestsEnglishOnly } = await loadTypeScriptModule("src/lib/learning.ts");
+  const { buildSystemPrompt, learnerRequestsEnglishOnly, detectLearnerLanguagePreference } = await loadTypeScriptModule("src/lib/learning.ts");
   assert.equal(learnerRequestsEnglishOnly("Can you keep explain in English?"), true);
+  assert.equal(learnerRequestsEnglishOnly("Please no more explanation in Spanish let's continue in English"), true);
   assert.equal(learnerRequestsEnglishOnly("Explícame esto en español"), false);
+  assert.equal(detectLearnerLanguagePreference(["Please no more explanation in Spanish let's continue in English", "Can continue with other sentence?"]), "english");
+  assert.equal(detectLearnerLanguagePreference(["Please no more explanation in Spanish let's continue in English", "Explícame esto en español"]), "spanish");
   const prompt = buildSystemPrompt("TUTOR", { turnMessage: "Can you keep explain in English?" });
-  assert.match(prompt, /TURN-SPECIFIC PRIORITY/);
+  assert.match(prompt, /LANGUAGE PRIORITY/);
   assert.match(prompt, /Write the entire response in natural English only/);
   assert.match(prompt, /Do not repeat or summarize the previous explanation/);
+  assert.match(buildSystemPrompt("TUTOR", { languagePreference: "english", turnMessage: "Can continue with other sentence?" }), /LANGUAGE PRIORITY/);
 });
 
 test("agent commands understand natural Spanish and English requests", async () => {

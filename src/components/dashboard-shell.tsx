@@ -18,7 +18,7 @@ import { ToolPermissions } from "@/components/tool-permissions";
 import { CorrectionReview } from "@/components/correction-review";
 import { extractCorrection } from "@/lib/corrections";
 import { describeAgentAction, parseAgentCommand, type AgentAction } from "@/lib/agent-actions";
-import { learnerRequestsEnglishOnly } from "@/lib/learning";
+import { detectLearnerLanguagePreference } from "@/lib/learning";
 
 type Mode = "ASSISTANT" | "TUTOR" | "SMART";
 type View = "overview" | "chat" | "learn" | "progress" | "settings";
@@ -292,7 +292,7 @@ function ChatPanel({ mode, setMode, messages, draft, setDraft, imageAttachment, 
   const [explanationErrors, setExplanationErrors] = useState<Record<string, string>>({});
   const [explainingMessageId, setExplainingMessageId] = useState<string | null>(null);
   const lastUserMessageIndex = messages.reduce((latest, message, index) => message.role === "user" ? index : latest, -1);
-  const englishOnlyTurn = lastUserMessageIndex >= 0 && learnerRequestsEnglishOnly(messages[lastUserMessageIndex].content);
+  const englishOnlyTurn = detectLearnerLanguagePreference(messages.filter((message) => message.role === "user").map((message) => message.content)) === "english";
   useEffect(() => {
     const messagesArea = messagesAreaRef.current;
     if (!messagesArea) return;
