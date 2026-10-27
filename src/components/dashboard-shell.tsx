@@ -57,6 +57,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   const [conversationId, setConversationId] = useState<string>();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const sendLockRef = useRef(false);
   const chatAbortControllerRef = useRef<AbortController | null>(null);
   const chatAbortReasonRef = useRef<"manual" | "timeout" | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -209,7 +210,8 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   }
 
   async function sendMessage(event?: React.FormEvent) {
-    event?.preventDefault(); const typedMessage = draft.trim(); const message = typedMessage || (imageAttachment ? "Please analyze the attached image and explain anything important." : ""); if (!message || isSending) return; if (!user) { setAuthOpen(true); return; }
+    event?.preventDefault(); const typedMessage = draft.trim(); const message = typedMessage || (imageAttachment ? "Please analyze the attached image and explain anything important." : ""); if (!message || isSending || sendLockRef.current) return; if (!user) { setAuthOpen(true); return; }
+    sendLockRef.current = true;
     const imageData = imageAttachment?.dataUrl;
     const shouldResearch = webResearch;
     setWebResearch(false);
@@ -218,6 +220,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
     const agentAction = !imageData && mode === "ASSISTANT" ? parseAgentCommand(message) : null;
     if (agentAction) {
       setMessages((current) => current.map((item) => item.id === assistantMessage.id ? { ...item, content: describeAgentAction(agentAction) } : item));
+      sendLockRef.current = false;
       setIsSending(false);
       handleAgentAction(agentAction);
       return;
@@ -246,7 +249,7 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
         }
       }
       saveCorrection(message, assistantText);
-    } catch (error) { const errorMessage = error instanceof DOMException && error.name === "AbortError" ? chatAbortReasonRef.current === "manual" ? "Response stopped." : "The response took too long. Try sending it again." : error instanceof Error ? error.message : "Something went wrong."; setMessages((current) => current.map((item) => item.id === assistantMessage.id ? { ...item, content: `I couldn’t complete that response. ${errorMessage}` } : item)); } finally { window.clearTimeout(timeoutId); chatAbortControllerRef.current = null; chatAbortReasonRef.current = null; setIsSending(false); }
+    } catch (error) { const errorMessage = error instanceof DOMException && error.name === "AbortError" ? chatAbortReasonRef.current === "manual" ? "Response stopped." : "The response took too long. Try sending it again." : error instanceof Error ? error.message : "Something went wrong."; setMessages((current) => current.map((item) => item.id === assistantMessage.id ? { ...item, content: `I couldn’t complete that response. ${errorMessage}` } : item)); } finally { window.clearTimeout(timeoutId); chatAbortControllerRef.current = null; chatAbortReasonRef.current = null; sendLockRef.current = false; setIsSending(false); }
   }
 
   function cancelChatResponse() { chatAbortReasonRef.current = "manual"; chatAbortControllerRef.current?.abort(); }

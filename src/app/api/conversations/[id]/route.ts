@@ -10,8 +10,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const conversation = await db.conversation.findFirst({
     where: { id, userId: session.user.id },
-    select: { id: true, title: true, mode: true, messages: { orderBy: { createdAt: "asc" }, take: 40, select: { id: true, role: true, content: true } } },
+    select: { id: true, title: true, mode: true, messages: { orderBy: { createdAt: "desc" }, take: 40, select: { id: true, role: true, content: true } } },
   });
   if (!conversation) return NextResponse.json({ error: "Conversation not found." }, { status: 404 });
-  return NextResponse.json({ conversation });
+  return NextResponse.json({ conversation: { ...conversation, messages: conversation.messages.reverse() } });
 }
