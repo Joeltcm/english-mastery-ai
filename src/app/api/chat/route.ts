@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   try {
     providerResponse = await createDeepSeekResponse({
       model,
-      instructions: `${buildSystemPrompt(mode, { voiceConversation: studyActivity === "voice-conversation" })}${imageData ? "\nAn image is attached for this turn. Analyze only what is visible, distinguish observations from uncertainty, and never infer sensitive personal attributes. If it contains English text or an exercise, explain it clearly and connect useful vocabulary to the learner's focus." : ""}${memoryInstruction}${webResearch ? "\nWeb research is explicitly enabled for this turn. Search for current information, cite the sources you relied on, and distinguish current facts from general knowledge." : ""}`,
+      instructions: `${buildSystemPrompt(mode, { voiceConversation: studyActivity === "voice-conversation", turnMessage: userMessage })}${imageData ? "\nAn image is attached for this turn. Analyze only what is visible, distinguish observations from uncertainty, and never infer sensitive personal attributes. If it contains English text or an exercise, explain it clearly and connect useful vocabulary to the learner's focus." : ""}${memoryInstruction}${webResearch ? "\nWeb research is explicitly enabled for this turn. Search for current information, cite the sources you relied on, and distinguish current facts from general knowledge." : ""}`,
       input,
       ...(webResearch ? { tools: [{ type: "web_search" }], tool_choice: "required" } : {}),
       reasoning: { effort: "none" },
