@@ -56,6 +56,8 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "scripts/run-retention.mjs"), "utf8"), /CRON_SECRET/);
   assert.match(readFileSync(join(root, "scripts/deploy-preflight.mjs"), "utf8"), /missingRequiredEnvironment/);
   assert.match(readFileSync(join(root, "scripts/deploy-preflight.mjs"), "utf8"), /gitRemoteConfigured/);
+  assert.match(readFileSync(join(root, "scripts/deploy-verify.mjs"), "utf8"), /manifest\.webmanifest/);
+  assert.match(readFileSync(join(root, "scripts/deploy-verify.mjs"), "utf8"), /strict healthcheck ready/);
   assert.match(readFileSync(join(root, "src/app/api/assessment/route.ts"), "utf8"), /sessionsSinceAssessment/);
   assert.match(readFileSync(join(root, "src/app/api/lessons/route.ts"), "utf8"), /orderedLessons/);
   assert.match(readFileSync(join(root, "src/app/api/lessons/[slug]/attempt/route.ts"), "utf8"), /timeZone: parsed.data.timezone/);

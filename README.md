@@ -41,6 +41,7 @@ npm run typecheck
 npm test
 npm run build
 npm run deploy:preflight
+DEPLOY_VERIFY_URL=https://your-app.up.railway.app npm run deploy:verify
 npm audit --omit=dev --audit-level=high
 ```
 
@@ -74,6 +75,7 @@ npm audit --omit=dev --audit-level=high
 4. Set `HEALTHCHECK_STRICT=true` and confirm `/api/health` reports `ready` before sharing the URL. A `degraded` response is expected only for local development without services.
 5. Add a second Railway service using `railway.retention.toml`, set the same `CRON_SECRET` on both services, and set `RETENTION_APP_URL` to the web service URL.
 6. Configure the private Git remote and run `npm run deploy:preflight` with the production environment loaded. The preflight checks the remote, required variables, migrations, and Railway files; a non-zero result is a deployment stop signal and does not claim that deployment succeeded.
+7. After the deployment is active, run `DEPLOY_VERIFY_URL=https://your-app.up.railway.app npm run deploy:verify`. It checks the strict health response and the public PWA assets without printing or requiring secret values.
 
 ## Implemented
 
