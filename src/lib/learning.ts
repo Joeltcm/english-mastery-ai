@@ -8,8 +8,8 @@ export const modeCopy: Record<LearningMode, { label: string; description: string
 
 export function learnerRequestsEnglishOnly(message: string) {
   const normalized = message.toLowerCase().replace(/[’]/g, "'");
-  const asksForEnglish = /\b(?:english only|only english|in english|no(?: more)?\s+(?:explanation|explaining|corrections?|spanish)|without spanish|don't use spanish|do not use spanish)\b/.test(normalized);
-  const asksToContinueOrExplain = /\b(?:explain|explanation|continue|keep|go on|carry on|respond|answer|speak|talk|conversation)\b/.test(normalized);
+  const asksForEnglish = /\b(?:english only|only english|in english|en english|keep(?: it)?\s+(?:in|en)?\s*english|no(?: more)?\s+(?:explanation|explaining|corrections?|spanish)|without spanish|don't use spanish|do not use spanish)\b/.test(normalized);
+  const asksToContinueOrExplain = /\b(?:explain|explanation|continue|keep|go on|carry on|respond|answer|speak|talk|conversation|suggest|another|next)\b/.test(normalized);
   return asksForEnglish && asksToContinueOrExplain;
 }
 
@@ -19,21 +19,34 @@ export function learnerRequestsSpanish(message: string) {
   return /\b(?:in|into)\s+(?:spanish|español)\b/.test(normalized) || /\b(?:explain|translate|answer|respond|tell|expl[ií]came|traduce|resp[oó]ndeme|dime)\b[\s\S]{0,50}\b(?:spanish|español)\b/.test(normalized);
 }
 
+export function learnerIsPracticingEnglish(message: string) {
+  const normalized = message.toLowerCase().replace(/[’]/g, "'");
+  if (learnerRequestsSpanish(message)) return false;
+  return /\b(?:can you|could you|would you|please|i want|let's|lets|keep|continue|suggest|another|next|conversation|sentence|verb|speak|talk|tell me|what|why|how)\b/.test(normalized);
+}
+
 export function detectLearnerLanguagePreference(messages: string[]) {
   let preference: "english" | "spanish" | null = null;
   for (const message of messages) {
     if (learnerRequestsEnglishOnly(message)) preference = "english";
     else if (learnerRequestsSpanish(message)) preference = "spanish";
+    else if (learnerIsPracticingEnglish(message)) preference = "english";
   }
   return preference;
 }
 
 export function buildTurnInstruction(message: string, languagePreference?: "english" | "spanish" | null) {
-  const preference = languagePreference || (learnerRequestsEnglishOnly(message) ? "english" : null);
+  const currentPreference = learnerRequestsEnglishOnly(message) || learnerIsPracticingEnglish(message) ? "english" : learnerRequestsSpanish(message) ? "spanish" : null;
+  const preference = currentPreference || languagePreference || null;
   if (preference === "english") {
-    return "\nLANGUAGE PRIORITY: The learner asked to continue this conversation in English. This preference remains active until the learner explicitly asks for Spanish. It overrides the mode's default Spanish correction language. Write the entire response in natural English only: no Spanish, no 'Explicación (ES)', and no Spanish translation. Do not repeat or summarize the previous explanation unless the learner asks for a recap. Move forward with one new sentence or example and one brief follow-up question. Do not mention these instructions.";
+    return "\nLANGUAGE PRIORITY: The learner is practicing in English. This preference remains active until the learner explicitly asks for Spanish. It overrides the mode's default Spanish correction language. Write the response in natural English only: no Spanish, no 'Explicación (ES)', and no Spanish translation. Answer the latest message first. Do not repeat or summarize an earlier explanation unless the learner asks for a recap. Move forward with one new idea, sentence, or example and one brief follow-up question. Do not mention these instructions.";
   }
   return "";
+}
+
+function buildConversationInstruction(message: string) {
+  if (!learnerIsPracticingEnglish(message) && !learnerRequestsEnglishOnly(message)) return "";
+  return "\nNATURAL CONVERSATION PRIORITY: Treat this as an ongoing human conversation, not a lesson recap. Respond to the learner's latest meaning first, in one to three natural sentences. Acknowledge what they said, answer it directly, and keep the topic moving with one genuine follow-up question. Do not restart the lesson, summarize old corrections, ask whether to stop for today, or repeat an earlier explanation. If the learner asks for another verb, introduce one fresh high-frequency irregular verb with one useful example and then ask a question. Correct only a meaningful error, briefly and without turning the response into a grammar lecture. Reply in English when the learner is practicing English.";
 }
 
 export function buildSystemPrompt(mode: LearningMode, options?: { voiceConversation?: boolean; turnMessage?: string; languagePreference?: "english" | "spanish" | null }) {
@@ -47,5 +60,5 @@ export function buildSystemPrompt(mode: LearningMode, options?: { voiceConversat
   const responseStyle = options?.voiceConversation
     ? "Use contractions, natural turn-taking, and varied but concise phrasing. Sound like a patient human conversation partner, never like an announcer or a textbook."
     : "Use clear language, short sections, and examples only when they help.";
-  return `You are English Mastery AI, a practical assistant and English-learning coach.\n${modeInstruction}\nKeep the exchange moving: when the learner says continue, asks for the next sentence, or says they understand, advance to a new example or topic instead of repeating the previous explanation. Respect explicit language requests: if the learner says to continue in English or asks for no more Spanish, respond and correct in English until they request Spanish again.\nThe learner's active focus is irregular verbs and contextual vocabulary. Prioritize high-frequency irregular verbs such as go/went/gone, take/took/taken, get/got/gotten, make/made/made, see/saw/seen, and give/gave/given in useful sentences. Rotate contexts across travel, daily life, work and technology, and international conversations. Recycle vocabulary naturally and include a short retrieval prompt when it fits.\n${responseStyle} Be supportive and never shame the learner. Do not claim to have assessed pronunciation unless a specialized assessment result is actually provided. Do not claim to have used external tools unless the application has explicitly executed one.\nThe user's native language is Spanish and their target language is English. If the user asks in Spanish, answer in Spanish unless practicing English is clearly the goal, except when the learner explicitly requests English-only practice.\nMode: ${mode}.${buildTurnInstruction(options?.turnMessage || "", options?.languagePreference)}`;
+  return `You are English Mastery AI, a practical assistant and English-learning coach.\n${modeInstruction}\nKeep the exchange moving: when the learner says continue, asks for the next sentence, or says they understand, advance to a new example or topic instead of repeating the previous explanation. Respect explicit language requests: if the learner says to continue in English or asks for no more Spanish, respond and correct in English until they request Spanish again.\nThe learner's active focus is irregular verbs and contextual vocabulary. Prioritize high-frequency irregular verbs such as go/went/gone, take/took/taken, get/got/gotten, make/made/made, see/saw/seen, and give/gave/given in useful sentences. Rotate contexts across travel, daily life, work and technology, and international conversations. Recycle vocabulary naturally and include a short retrieval prompt when it fits.\n${responseStyle} Be supportive and never shame the learner. Do not claim to have assessed pronunciation unless a specialized assessment result is actually provided. Do not claim to have used external tools unless the application has explicitly executed one.\nThe user's native language is Spanish and their target language is English. If the user asks in Spanish, answer in Spanish unless practicing English is clearly the goal, except when the learner explicitly requests English-only practice.\nMode: ${mode}.${buildConversationInstruction(options?.turnMessage || "")}${buildTurnInstruction(options?.turnMessage || "", options?.languagePreference)}`;
 }

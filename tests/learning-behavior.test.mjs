@@ -40,16 +40,21 @@ test("learning prompts preserve the original request and active focus", async ()
 });
 
 test("explicit English continuation requests override Spanish correction defaults", async () => {
-  const { buildSystemPrompt, learnerRequestsEnglishOnly, detectLearnerLanguagePreference } = await loadTypeScriptModule("src/lib/learning.ts");
+  const { buildSystemPrompt, learnerRequestsEnglishOnly, learnerIsPracticingEnglish, detectLearnerLanguagePreference } = await loadTypeScriptModule("src/lib/learning.ts");
   assert.equal(learnerRequestsEnglishOnly("Can you keep explain in English?"), true);
   assert.equal(learnerRequestsEnglishOnly("Please no more explanation in Spanish let's continue in English"), true);
+  assert.equal(learnerRequestsEnglishOnly("Can you keep en english?"), true);
+  assert.equal(learnerIsPracticingEnglish("Can you suggest other verb?"), true);
   assert.equal(learnerRequestsEnglishOnly("Explícame esto en español"), false);
   assert.equal(detectLearnerLanguagePreference(["Please no more explanation in Spanish let's continue in English", "Can continue with other sentence?"]), "english");
   assert.equal(detectLearnerLanguagePreference(["Please no more explanation in Spanish let's continue in English", "Explícame esto en español"]), "spanish");
+  assert.equal(detectLearnerLanguagePreference(["Explícame esto en español", "Can you suggest other verb?"]), "english");
   const prompt = buildSystemPrompt("TUTOR", { turnMessage: "Can you keep explain in English?" });
   assert.match(prompt, /LANGUAGE PRIORITY/);
-  assert.match(prompt, /Write the entire response in natural English only/);
-  assert.match(prompt, /Do not repeat or summarize the previous explanation/);
+  assert.match(prompt, /Write the response in natural English only/);
+  assert.match(prompt, /Do not repeat or summarize an earlier explanation/);
+  assert.match(buildSystemPrompt("TUTOR", { turnMessage: "Can you suggest other verb?", languagePreference: "spanish" }), /NATURAL CONVERSATION PRIORITY/);
+  assert.match(buildSystemPrompt("TUTOR", { turnMessage: "Can you suggest other verb?", languagePreference: "spanish" }), /Reply in English when the learner is practicing English/);
   assert.match(buildSystemPrompt("TUTOR", { languagePreference: "english", turnMessage: "Can continue with other sentence?" }), /LANGUAGE PRIORITY/);
 });
 
