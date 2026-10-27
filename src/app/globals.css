@@ -61,7 +61,7 @@
 /* Keep the agent composer available while the conversation history scrolls. */
 .chat-view { display:flex; flex-direction:column; min-height:calc(100dvh - 176px); }
 .chat-workspace { display:flex; flex:1 1 auto; flex-direction:column; min-height:0; }
-.messages-area { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.messages-area { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:auto; scrollbar-gutter:stable; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
 .composer { position:sticky; bottom:10px; z-index:4; flex:0 0 auto; margin-top:10px; }
 
 @media (max-width:620px) {
