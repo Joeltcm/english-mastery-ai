@@ -72,3 +72,32 @@
 @media (max-width:430px) {
   .chat-view { min-height:calc(100dvh - 108px); }
 }
+
+/* Keep chat content inside the visual viewport on narrow iPhone screens. */
+.chat-view,
+.chat-workspace,
+.messages-area,
+.composer,
+.composer-footer,
+.composer-tools {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+.message-row { width:100%; min-width:0; }
+.message-bubble {
+  flex:1 1 auto;
+  min-width:0;
+  max-width:calc(100% - 41px);
+  overflow-wrap:anywhere;
+}
+.message-bubble p { overflow-wrap:anywhere; }
+.composer textarea { min-width:0; max-width:100%; }
+.composer-tools { overflow:hidden; }
+.composer-tools span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+@media (max-width:620px) {
+  .composer-footer { align-items:flex-end; gap:8px; }
+  .composer-tools { flex:1 1 auto; }
+  .send-button { flex:0 0 34px; }
+}
