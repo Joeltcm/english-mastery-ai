@@ -27,7 +27,7 @@ export function IrregularVerbsList() {
     <div className="irregular-table" role="table" aria-label="Irregular verbs ordered by frequency">
       <div className="irregular-table-head" role="row"><span>#</span><span>Base form</span><span>Past simple</span><span>Past participle</span><span>Meaning</span><span>Example</span></div>
       {visibleVerbs.map((verb) => { const expanded = expandedRank === verb.rank; return <article className="irregular-row" role="row" key={verb.base}>
-        <span className="irregular-rank">{verb.rank}</span><strong>{verb.base}</strong><span className="irregular-past">{verb.past}</span><span className="irregular-participle">{verb.participle}</span><span className="irregular-meaning">{verb.meaning}</span><button className="irregular-example-button" onClick={() => setExpandedRank(expanded ? null : verb.rank)} aria-expanded={expanded}>{expanded ? "Hide" : "View"} <span>{expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</span></button>
+        <span className="irregular-rank">{verb.rank}</span><strong>{verb.base}</strong><span className="irregular-past" data-label="Past simple">{verb.past}</span><span className="irregular-participle" data-label="Past participle">{verb.participle}</span><span className="irregular-meaning" data-label="Meaning">{verb.meaning}</span><button className="irregular-example-button" onClick={() => setExpandedRank(expanded ? null : verb.rank)} aria-expanded={expanded}>{expanded ? "Hide" : "View"} <span>{expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</span></button>
         {expanded && <div className="irregular-example"><span>Example</span><p>{verb.example}</p></div>}
       </article>; })}
     </div>
