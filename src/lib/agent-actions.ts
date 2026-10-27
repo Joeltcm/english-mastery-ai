@@ -5,7 +5,7 @@ export type AgentAction =
   | { type: "set-mode"; mode: "TUTOR" | "SMART" }
   | { type: "open-voice" }
   | { type: "start-practice"; mode: "TUTOR" | "SMART"; prompt: string }
-  | { type: "toggle-theme" };
+  | { type: "set-theme"; darkMode: boolean };
 
 function normalizeCommand(input: string) {
   return input
@@ -49,8 +49,11 @@ export function parseAgentCommand(input: string): AgentAction | null {
 
   if (matches(command, [
     /\b(activa|activar|enciende|encender|turn on|enable)\b.*\b(modo oscuro|dark mode|tema oscuro|dark theme)\b/,
+  ])) return { type: "set-theme", darkMode: true };
+
+  if (matches(command, [
     /\b(deshactiva|desactivar|apaga|apagar|turn off|disable)\b.*\b(modo oscuro|dark mode|tema oscuro|dark theme)\b/,
-  ])) return { type: "toggle-theme" };
+  ])) return { type: "set-theme", darkMode: false };
 
   if (matches(command, [
     /\b(muestrame|ensename|abre|ir a|llevame|go to|take me to|open|show me)\b.*\b(progreso|avance|progress|stats|estadisticas|performance|como voy|how am i doing)\b/,
@@ -85,7 +88,7 @@ export function describeAgentAction(action: AgentAction) {
   if (action.type === "set-mode") return action.mode === "TUTOR" ? "Let’s practice with your English Tutor." : "Let’s continue with Smart Learning.";
   if (action.type === "open-voice") return "Opening live voice practice.";
   if (action.type === "start-practice") return "I’m preparing a focused practice session for you.";
-  if (action.type === "toggle-theme") return "I’m updating your appearance preference.";
+  if (action.type === "set-theme") return action.darkMode ? "I’m turning dark mode on." : "I’m turning dark mode off.";
   const copy: Record<AgentView, string> = {
     overview: "Opening your overview.",
     chat: "Opening your conversation space.",

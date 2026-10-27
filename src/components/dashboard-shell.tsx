@@ -132,8 +132,8 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
       setVoiceOpen(true);
       return;
     }
-    if (action.type === "toggle-theme") {
-      setDarkMode((current) => !current);
+    if (action.type === "set-theme") {
+      setDarkMode(action.darkMode);
       return;
     }
     setVoiceOpen(false);
