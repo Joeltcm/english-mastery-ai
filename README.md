@@ -122,8 +122,10 @@ npm audit --omit=dev --audit-level=high
 - Protected retention endpoint at `POST /api/maintenance/retention` for scheduled deletion of old AI usage and tool-execution logs.
 - Railway cron-service template in `railway.retention.toml` plus `scripts/run-retention.mjs`; configure that file as a separate Railway service with `RETENTION_APP_URL` and the same `CRON_SECRET` as the web service.
 
-## Remaining work
+## Production status and remaining work
 
-Remaining production work is live credential/deployment verification. This checkout currently has no configured Git remote, so private GitHub repository setup and Railway deployment still require the owner’s repository access and production credentials. The app deliberately shows “not assessed” when no specialized pronunciation result exists.
+The application is deployed at <https://english-mastery-ai-production.up.railway.app>. The active Railway service has PostgreSQL, Auth.js, and DeepSeek configured, and `/api/health` reports `ready` with strict production checks enabled.
 
-Before a Railway deployment, run `npm run deploy:preflight` with the production environment variables loaded. It validates required configuration and deployment artifacts without printing secret values; a non-zero result means deployment should stop until the missing configuration is supplied.
+Before future Railway deployments, run `npm run deploy:preflight` with the production environment variables loaded. It validates required configuration and deployment artifacts without printing secret values; a non-zero result means the deployment should stop until the missing configuration is supplied. The local checkout may report missing `DATABASE_URL` or `DEEPSEEK_API_KEY` when those values intentionally exist only in Railway.
+
+Optional work remains for specialized pronunciation scoring: configure `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` if provider-based assessment is desired. Without those variables, the app safely reports that no specialized pronunciation score is available. The separate Railway retention service also requires its production `CRON_SECRET` and `RETENTION_APP_URL` values.
