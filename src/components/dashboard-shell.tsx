@@ -57,7 +57,10 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return window.localStorage.getItem("english-mastery.dark-mode") === "true"; } catch { return false; }
+  });
   const [authOpen, setAuthOpen] = useState(!user);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authError, setAuthError] = useState("");
@@ -70,6 +73,10 @@ export function DashboardShell({ initialUser, initialProfile }: { initialUser: {
   const [webResearchAllowed, setWebResearchAllowed] = useState(false);
   const [liveProfile, setLiveProfile] = useState<Profile | null>(null);
   const [todayStudyMinutes, setTodayStudyMinutes] = useState(0);
+
+  useEffect(() => {
+    try { window.localStorage.setItem("english-mastery.dark-mode", String(darkMode)); } catch { /* Device-only preference is optional. */ }
+  }, [darkMode]);
 
   const handleToolPermissionChange = useCallback((enabled: boolean) => {
     setWebResearchAllowed(enabled);

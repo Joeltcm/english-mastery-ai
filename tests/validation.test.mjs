@@ -67,6 +67,7 @@ test("learning and privacy surfaces are present", () => {
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /setMessages\(starterMessages\)/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /key=\{userEmail \|\| "guest"\}/);
   assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /new Intl\.DateTimeFormat/);
+  assert.match(readFileSync(join(root, "src/components/dashboard-shell.tsx"), "utf8"), /english-mastery\.dark-mode/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /provider could not start/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /text-conversation/);
   assert.match(readFileSync(join(root, "src/app/api/chat/route.ts"), "utf8"), /studyActivity/);
